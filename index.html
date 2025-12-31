@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
-  <title>Shake Rhythm (HTML1枚)</title>
+  <title>Shake Rhythm (Long Notes)</title>
   <style>
     :root { color-scheme: dark; }
     body {
@@ -52,12 +52,7 @@
       border-color: rgba(248,81,73,0.4);
       color: #ffb4b0;
     }
-    main {
-      flex: 1;
-      display: grid;
-      place-items: center;
-      padding: 10px;
-    }
+    main { flex: 1; display: grid; place-items: center; padding: 10px; }
     canvas {
       width: min(94vw, 520px);
       height: min(78vh, 860px);
@@ -75,16 +70,9 @@
       color: rgba(230,237,243,0.75);
       line-height: 1.45;
     }
-    .row {
-      display: flex;
-      gap: 12px;
-      flex-wrap: wrap;
-      align-items: center;
-    }
+    .row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
     .pill {
-      display: inline-flex;
-      gap: 8px;
-      align-items: center;
+      display: inline-flex; gap: 8px; align-items: center;
       border: 1px solid rgba(255,255,255,0.12);
       background: rgba(0,0,0,0.18);
       padding: 8px 10px;
@@ -98,8 +86,7 @@
 
 <body>
 <header>
-  <div class="title">Shake Rhythm — 振って叩く音ゲー（HTML1枚）</div>
-
+  <div class="title">Shake Rhythm — ロングノーツ対応</div>
   <div class="controls">
     <select id="difficulty">
       <option value="easy">EASY（ゆっくり）</option>
@@ -118,23 +105,18 @@
 
 <footer>
   <div class="row">
-    <span class="pill">操作: <b>スマホを振る</b>（タイミングで判定）</span>
-    <span class="pill">重なり: 判定ライン付近に複数ノーツがあれば<b>一度の振りでまとめて判定</b></span>
+    <span class="pill">操作: <b>スマホを振る/動かす</b></span>
+    <span class="pill">TAP: タイミングで振る</span>
+    <span class="pill">HOLD: 開始で振って掴む → <b>動かし続けて</b>維持</span>
     <span class="pill">判定: <span class="mono">PERFECT / GREAT / GOOD / MISS</span></span>
   </div>
   <div style="margin-top:10px">
-    メモ: iOSはセンサー利用にユーザー操作による許可が必要です（「モーション許可」→「START」の順）。<br>
-    デスクトップではスペースキーでも叩けます（動作確認用）。
+    iOSは「モーション許可」→「START」の順で。PCではスペースキーでTAP判定できます（HOLDは疑似的に連打で維持）。
   </div>
 </footer>
 
 <script>
 (() => {
-  // -----------------------------
-  // Utility
-  // -----------------------------
-  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
-
   // -----------------------------
   // Canvas setup
   // -----------------------------
@@ -145,12 +127,10 @@
   // Audio (simple beep)
   // -----------------------------
   let audioCtx = null;
-
   function ensureAudio() {
     if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     if (audioCtx.state === "suspended") audioCtx.resume();
   }
-
   function beep(freq = 880, dur = 0.05, gain = 0.06) {
     if (!audioCtx) return;
     const t0 = audioCtx.currentTime;
@@ -167,172 +147,296 @@
 
   // -----------------------------
   // Difficulty presets
+  //  - shakeThreshold: 軽く振るだけで反応するように下げた
+  //  - hold率や長さも難易度で変える
   // -----------------------------
   const DIFF = {
-    easy:   { bpm: 92,  lengthBeats: 64, spawnJitter: 0.08, overlapRate: 0.22, noteSpeed: 430, shakeThreshold: 13.0 },
-    normal: { bpm: 112, lengthBeats: 80, spawnJitter: 0.06, overlapRate: 0.32, noteSpeed: 520, shakeThreshold: 12.0 },
-    hard:   { bpm: 134, lengthBeats: 96, spawnJitter: 0.05, overlapRate: 0.45, noteSpeed: 640, shakeThreshold: 11.2 },
+    easy:   { bpm: 92,  lengthBeats: 64,  spawnJitter: 0.08, overlapRate: 0.18, noteSpeed: 430, shakeThreshold: 6.0,  holdRate: 0.14, holdBeatsMin: 2, holdBeatsMax: 4 },
+    normal: { bpm: 112, lengthBeats: 80,  spawnJitter: 0.06, overlapRate: 0.26, noteSpeed: 520, shakeThreshold: 5.0,  holdRate: 0.18, holdBeatsMin: 2, holdBeatsMax: 5 },
+    hard:   { bpm: 134, lengthBeats: 96,  spawnJitter: 0.05, overlapRate: 0.38, noteSpeed: 640, shakeThreshold: 4.2,  holdRate: 0.22, holdBeatsMin: 3, holdBeatsMax: 7 },
   };
 
   // -----------------------------
   // Game state
+  // Notes:
+  //  type: "tap" | "hold"
+  //  t: 判定ライン到達時刻（開始）
+  //  tEnd: hold終了時刻（holdのみ）
+  //  judged / hit / holding / completed
   // -----------------------------
   let running = false;
   let startTime = 0;
-  let lastFrame = 0;
-  let notes = []; // {t, hit:false, judged:false}
+  let notes = [];
   let score = 0;
   let combo = 0;
   let maxCombo = 0;
-  let counts = { perfect:0, great:0, good:0, miss:0 };
-  let lastShakeAt = -999;
-  let shakeCooldownMs = 140; // avoid double triggers
+  let counts = { perfect:0, great:0, good:0, miss:0, holdOk:0, holdFail:0 };
+
   let currentDiffKey = "normal";
   let judgeText = "";
   let judgeTextUntil = 0;
 
-  // Layout constants
+  // input
+  let lastShakeAtMs = -999;
+  let shakeCooldownMs = 80;     // 140 -> 80（連打しやすく）
+  let lastMag = 0;
+
+  // hold energy model
+  //  - motionでenergyを足す
+  //  - 毎フレーム減衰
+  //  - 一定時間energy低い状態が続いたら失敗
+  let holdEnergy = 0;
+  let holdLowSinceMs = null;
+
+  const HOLD = {
+    // これを上げるほど「動かし続けないと維持できない」
+    minEnergyToSustain: 0.35,
+    // energyが足りない状態がこの時間続くと失敗
+    failAfterMs: 260,
+    // 減衰（秒あたり）
+    decayPerSec: 0.85,
+    // motionイベントでdeltaがこの値を超えたらenergy加算（しきい値より低く設定して"軽い動き"も拾う）
+    sustainDeltaFactor: 0.60,
+    // 加算倍率
+    addGain: 0.14,
+  };
+
+  // Layout
   const W = canvas.width;
   const H = canvas.height;
   const laneX = W * 0.5;
   const judgeY = H * 0.78;
-  const spawnY = -40;
 
-  // Judgment windows (seconds), relative to note time when it crosses judge line
+  // Judgment windows (seconds)
   const WINDOWS = [
     { name: "PERFECT", dt: 0.060, pts: 100, key: "perfect", freq: 1200 },
     { name: "GREAT",   dt: 0.100, pts: 70,  key: "great",   freq: 980  },
     { name: "GOOD",    dt: 0.140, pts: 40,  key: "good",    freq: 740  },
   ];
 
+  function showJudge(text, pts=0) {
+    judgeText = pts > 0 ? `${text} +${pts}` : text;
+    judgeTextUntil = performance.now() + 520;
+  }
+
+  function nowSec() {
+    return (performance.now() - startTime) / 1000;
+  }
+
+  function noteY(noteTime, t, speedPxPerSec) {
+    const dt = noteTime - t;
+    return judgeY - dt * speedPxPerSec;
+  }
+
   // -----------------------------
-  // Note chart generation (with overlaps)
+  // Chart generation (tap + hold + overlaps)
   // -----------------------------
   function buildChart(diffKey) {
     const p = DIFF[diffKey];
     const beatSec = 60 / p.bpm;
 
     const arr = [];
-    // Create a rhythm: mostly 1/1, some 1/2, some overlaps at same timestamp.
     for (let i = 0; i < p.lengthBeats; i++) {
       const baseT = i * beatSec;
 
-      // main note (every beat)
-      arr.push({ t: baseT });
+      // tap base
+      arr.push({ type: "tap", t: baseT });
 
-      // occasional off-beat note (8th)
-      if (Math.random() < 0.35) {
-        arr.push({ t: baseT + 0.5 * beatSec });
+      // off-beat tap
+      if (Math.random() < 0.32) {
+        arr.push({ type: "tap", t: baseT + 0.5 * beatSec });
       }
 
-      // overlap: additional note(s) at same moment
+      // occasional overlaps (stack)
       if (Math.random() < p.overlapRate) {
-        const extra = (Math.random() < 0.35) ? 2 : 1; // sometimes triple stack
+        const extra = (Math.random() < 0.35) ? 2 : 1;
         for (let k = 0; k < extra; k++) {
-          // same timestamp, tiny jitter allowed to "almost same" but still overlapping visually
           const jitter = (Math.random() * 2 - 1) * p.spawnJitter * beatSec;
-          arr.push({ t: baseT + jitter });
+          arr.push({ type: "tap", t: baseT + jitter });
         }
+      }
+
+      // hold notes
+      // holdは「次の数拍を占有する」ため、生成しすぎないように率で制御
+      if (Math.random() < p.holdRate) {
+        const beats = p.holdBeatsMin + Math.floor(Math.random() * (p.holdBeatsMax - p.holdBeatsMin + 1));
+        const tEnd = baseT + beats * beatSec;
+        arr.push({ type: "hold", t: baseT + 0.25 * beatSec, tEnd });
       }
     }
 
-    // sort and normalize start at ~2 seconds after start for readiness
     arr.sort((a,b)=>a.t-b.t);
     const leadIn = 1.8;
-    notes = arr.map(n => ({ t: n.t + leadIn, hit: false, judged: false }));
 
-    // Reset scoring
+    notes = arr.map(n => ({
+      type: n.type,
+      t: n.t + leadIn,
+      tEnd: (n.type === "hold" ? (n.tEnd + leadIn) : null),
+      judged: false,
+      hit: false,
+      holding: false,
+      completed: false
+    }));
+
     score = 0; combo = 0; maxCombo = 0;
-    counts = { perfect:0, great:0, good:0, miss:0 };
+    counts = { perfect:0, great:0, good:0, miss:0, holdOk:0, holdFail:0 };
     judgeText = "";
     judgeTextUntil = 0;
+
+    holdEnergy = 0;
+    holdLowSinceMs = null;
   }
 
   // -----------------------------
-  // Timing helpers
+  // Tap judge (on shake)
   // -----------------------------
-  function nowSec() {
-    return (performance.now() - startTime) / 1000;
-  }
-
-  // note position: when time == note.t, it is at judge line
-  function noteY(noteTime, t, speedPxPerSec) {
-    const dt = noteTime - t; // positive if in future
-    // if dt is large, the note is above
-    return judgeY - dt * speedPxPerSec;
-  }
-
-  // -----------------------------
-  // Judgment on shake
-  // -----------------------------
-  function doJudge(actionTimeSec) {
+  function judgeTapAt(actionTimeSec) {
     if (!running) return;
 
-    // find notes near judge line within GOOD window, but allow stacked notes (same timing)
-    const p = DIFF[currentDiffKey];
-
-    let judgedAny = false;
-    let bestWindow = null;
-
-    // Collect hittable notes (not judged yet) within GOOD range.
+    // collect hittable tap notes within GOOD window
     const hittable = [];
     for (const n of notes) {
       if (n.judged) continue;
+      if (n.type !== "tap") continue;
       const dt = Math.abs(actionTimeSec - n.t);
-      if (dt <= WINDOWS[WINDOWS.length - 1].dt) {
-        hittable.push({ n, dt });
-      }
+      if (dt <= WINDOWS[WINDOWS.length - 1].dt) hittable.push({ n, dt });
     }
 
-    if (hittable.length === 0) {
-      // If the user shakes with no notes in window: treat as "空振り" (no penalty here, but you can penalize if you like)
+    // also allow starting hold
+    const holdStartable = [];
+    for (const n of notes) {
+      if (n.judged) continue;
+      if (n.type !== "hold") continue;
+      if (n.holding || n.completed) continue;
+      const dt = Math.abs(actionTimeSec - n.t);
+      if (dt <= WINDOWS[WINDOWS.length - 1].dt) holdStartable.push({ n, dt });
+    }
+
+    if (hittable.length === 0 && holdStartable.length === 0) {
       showJudge("EMPTY", 0);
       beep(220, 0.04, 0.04);
       return;
     }
 
-    // Determine the grade per note; if multiple notes, grade each separately.
-    // The UI text shows the best grade among them (typical feel).
+    // tap notes: grade each
+    let best = null;
     for (const h of hittable) {
       const { n, dt } = h;
-      let hitGrade = null;
-      for (const w of WINDOWS) {
-        if (dt <= w.dt) { hitGrade = w; break; }
-      }
-      if (hitGrade) {
-        n.hit = true;
-        n.judged = true;
-        judgedAny = true;
+      let wHit = null;
+      for (const w of WINDOWS) { if (dt <= w.dt) { wHit = w; break; } }
+      if (!wHit) continue;
 
-        score += hitGrade.pts;
+      n.hit = true;
+      n.judged = true;
+      score += wHit.pts;
+      combo += 1;
+      maxCombo = Math.max(maxCombo, combo);
+      counts[wHit.key] += 1;
+      beep(wHit.freq, 0.05, 0.06);
+
+      if (!best || wHit.pts > best.pts) best = wHit;
+    }
+
+    // start hold: (1振りで複数hold開始も可)
+    // hold開始は「tapと同時」でも問題ない設計
+    for (const h of holdStartable) {
+      const { n, dt } = h;
+      let wHit = null;
+      for (const w of WINDOWS) { if (dt <= w.dt) { wHit = w; break; } }
+      if (!wHit) continue;
+
+      n.holding = true;
+      n.hit = true; // started
+      // 開始点はスコア軽め、維持完了で加点
+      score += Math.floor(wHit.pts * 0.35);
+      combo += 1;
+      maxCombo = Math.max(maxCombo, combo);
+      beep(860, 0.05, 0.06);
+
+      if (!best || wHit.pts > best.pts) best = wHit;
+      showJudge("HOLD START", 0);
+
+      // hold開始直後に少しenergyを入れて、取りこぼしを減らす
+      holdEnergy = Math.min(1, holdEnergy + 0.25);
+      holdLowSinceMs = null;
+    }
+
+    if (best) showJudge(best.name, best.pts);
+  }
+
+  // -----------------------------
+  // Miss processing & Hold updates
+  // -----------------------------
+  function processMissesAndHold(t, dtSec) {
+    const missAfter = WINDOWS[WINDOWS.length - 1].dt;
+
+    // decay hold energy
+    holdEnergy = Math.max(0, holdEnergy - HOLD.decayPerSec * dtSec);
+
+    // if any hold is active, check sustain
+    const nowMs = performance.now();
+    const anyHolding = notes.some(n => n.type === "hold" && n.holding && !n.completed);
+
+    if (anyHolding) {
+      if (holdEnergy < HOLD.minEnergyToSustain) {
+        if (holdLowSinceMs == null) holdLowSinceMs = nowMs;
+        if (nowMs - holdLowSinceMs > HOLD.failAfterMs) {
+          // fail all currently holding notes
+          for (const n of notes) {
+            if (n.type === "hold" && n.holding && !n.completed && !n.judged) {
+              n.holding = false;
+              n.judged = true;
+              n.hit = false;
+              counts.holdFail += 1;
+              counts.miss += 1;
+            }
+          }
+          combo = 0;
+          showJudge("HOLD FAIL", 0);
+          beep(180, 0.06, 0.07);
+          holdLowSinceMs = null;
+        }
+      } else {
+        holdLowSinceMs = null;
+      }
+    } else {
+      holdLowSinceMs = null;
+    }
+
+    // complete holds
+    for (const n of notes) {
+      if (n.type !== "hold") continue;
+      if (n.judged) continue;
+
+      // if started and time passed end -> success
+      if (n.holding && t >= n.tEnd) {
+        n.completed = true;
+        n.holding = false;
+        n.judged = true;
+        n.hit = true;
+        counts.holdOk += 1;
+
+        // finish bonus
+        score += 120;
         combo += 1;
         maxCombo = Math.max(maxCombo, combo);
-        counts[hitGrade.key] += 1;
+        showJudge("HOLD OK +120", 0);
+        beep(1300, 0.06, 0.07);
+      }
 
-        // sound per note, slightly different freq
-        beep(hitGrade.freq, 0.05, 0.06);
-
-        if (!bestWindow || hitGrade.pts > bestWindow.pts) bestWindow = hitGrade;
+      // if not started and passed start window -> miss
+      if (!n.holding && !n.completed && (t - n.t) > missAfter) {
+        n.judged = true;
+        n.hit = false;
+        counts.miss += 1;
+        combo = 0;
+        showJudge("MISS", 0);
       }
     }
 
-    if (judgedAny) {
-      showJudge(bestWindow ? bestWindow.name : "HIT", bestWindow ? bestWindow.pts : 0);
-    }
-  }
-
-  function showJudge(text, pts) {
-    judgeText = pts > 0 ? `${text} +${pts}` : text;
-    judgeTextUntil = performance.now() + 520;
-  }
-
-  // -----------------------------
-  // Miss processing
-  // -----------------------------
-  function processMisses(t) {
-    // Any note that passed beyond GOOD window and not judged => miss
-    const missAfter = WINDOWS[WINDOWS.length - 1].dt;
+    // tap misses
     for (const n of notes) {
+      if (n.type !== "tap") continue;
       if (n.judged) continue;
       if (t - n.t > missAfter) {
         n.judged = true;
@@ -351,7 +455,7 @@
     const p = DIFF[currentDiffKey];
     ctx.clearRect(0, 0, W, H);
 
-    // Background grid
+    // background grid
     ctx.save();
     ctx.globalAlpha = 0.18;
     ctx.strokeStyle = "#9fb6d9";
@@ -363,7 +467,7 @@
     }
     ctx.restore();
 
-    // Lane / judge line
+    // judge line + windows
     ctx.save();
     ctx.lineWidth = 3;
     ctx.strokeStyle = "rgba(47,129,247,0.8)";
@@ -372,7 +476,6 @@
     ctx.lineTo(W-40, judgeY);
     ctx.stroke();
 
-    // Windows visualization
     ctx.globalAlpha = 0.10;
     ctx.fillStyle = "#2f81f7";
     const pxGood = WINDOWS[2].dt * p.noteSpeed;
@@ -385,14 +488,65 @@
     ctx.fillRect(40, judgeY - pxPerfect, W-80, pxPerfect*2);
     ctx.restore();
 
-    // Notes
-    const visibleTop = -80, visibleBottom = H + 80;
-    const stacks = [];
+    const visibleTop = -120, visibleBottom = H + 120;
 
-    // group notes by near-equal time to make overlaps visually "stacked"
-    // (This is purely visual; timing is handled per note.)
-    const tol = 0.012; // seconds
+    // draw holds (as vertical capsule)
     for (const n of notes) {
+      if (n.type !== "hold") continue;
+      const y0 = noteY(n.t, t, p.noteSpeed);
+      const y1 = noteY(n.tEnd, t, p.noteSpeed);
+
+      // if completely out of view, skip
+      const top = Math.min(y0, y1), bottom = Math.max(y0, y1);
+      if (bottom < visibleTop || top > visibleBottom) continue;
+
+      // body
+      const x = laneX;
+      const w = 18;
+      const r = 10;
+
+      ctx.save();
+      const active = n.holding && !n.completed && !n.judged;
+      const done = n.completed || (n.judged && n.hit);
+      const failed = n.judged && !n.hit;
+
+      let fill = "rgba(230,237,243,0.18)";
+      let stroke = "rgba(47,129,247,0.55)";
+      if (active) { fill = "rgba(47,129,247,0.22)"; stroke = "rgba(47,129,247,0.90)"; }
+      if (done)   { fill = "rgba(46,160,67,0.18)"; stroke = "rgba(46,160,67,0.90)"; }
+      if (failed) { fill = "rgba(248,81,73,0.12)"; stroke = "rgba(248,81,73,0.70)"; }
+
+      ctx.fillStyle = fill;
+      ctx.strokeStyle = stroke;
+      ctx.lineWidth = 2;
+
+      // rounded rect
+      const yTop = Math.min(y0, y1);
+      const h = Math.abs(y1 - y0);
+      roundRect(ctx, x - w/2, yTop, w, h, r);
+      ctx.fill();
+      ctx.stroke();
+
+      // head marker (start)
+      ctx.beginPath();
+      ctx.fillStyle = active ? "rgba(47,129,247,0.95)" : "rgba(230,237,243,0.85)";
+      ctx.arc(x, y0, 14, 0, Math.PI*2);
+      ctx.fill();
+
+      // tail marker (end)
+      ctx.beginPath();
+      ctx.fillStyle = "rgba(230,237,243,0.30)";
+      ctx.arc(x, y1, 9, 0, Math.PI*2);
+      ctx.fill();
+
+      ctx.restore();
+    }
+
+    // draw tap stacks (overlaps)
+    const stacks = [];
+    const tol = 0.012;
+    for (const n of notes) {
+      if (n.type !== "tap") continue;
       const y = noteY(n.t, t, p.noteSpeed);
       if (y < visibleTop || y > visibleBottom) continue;
       if (n.judged && y > judgeY + 20) continue;
@@ -404,15 +558,14 @@
       if (!found) stacks.push({ t: n.t, items: [{n,y}] });
     }
 
-    // draw each stack with slight x offsets so overlap is apparent
     for (const s of stacks) {
       const items = s.items;
       items.sort((a,b)=>a.y-b.y);
       for (let i=0; i<items.length; i++) {
         const { n, y } = items[i];
         const offset = (i - (items.length-1)/2) * 14;
-
         const r = 14;
+
         ctx.beginPath();
         ctx.fillStyle = n.judged ? (n.hit ? "rgba(46,160,67,0.85)" : "rgba(248,81,73,0.55)") : "rgba(230,237,243,0.85)";
         ctx.strokeStyle = "rgba(0,0,0,0.35)";
@@ -421,7 +574,6 @@
         ctx.fill();
         ctx.stroke();
 
-        // inner ring for unjudged
         if (!n.judged) {
           ctx.beginPath();
           ctx.strokeStyle = "rgba(47,129,247,0.7)";
@@ -431,6 +583,19 @@
         }
       }
     }
+
+    // hold energy bar (debug)
+    ctx.save();
+    const barW = 160, barH = 10;
+    const bx = 18, by = H - 60;
+    ctx.fillStyle = "rgba(255,255,255,0.10)";
+    ctx.fillRect(bx, by, barW, barH);
+    ctx.fillStyle = "rgba(47,129,247,0.85)";
+    ctx.fillRect(bx, by, barW * Math.max(0, Math.min(1, holdEnergy)), barH);
+    ctx.fillStyle = "rgba(230,237,243,0.70)";
+    ctx.font = "600 12px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace";
+    ctx.fillText(`HOLD ENERGY`, bx, by - 6);
+    ctx.restore();
 
     // HUD
     ctx.save();
@@ -442,13 +607,11 @@
     ctx.fillStyle = "rgba(230,237,243,0.75)";
     ctx.fillText(`COMBO  ${combo}   (MAX ${maxCombo})`, 18, 60);
 
-    // Accuracy summary
     ctx.fillText(
-      `P:${counts.perfect}  G:${counts.great}  O:${counts.good}  M:${counts.miss}`,
+      `P:${counts.perfect}  G:${counts.great}  O:${counts.good}  M:${counts.miss}  H_OK:${counts.holdOk}  H_NG:${counts.holdFail}`,
       18, 84
     );
 
-    // Judge text
     if (performance.now() < judgeTextUntil) {
       ctx.fillStyle = "rgba(255,255,255,0.92)";
       ctx.font = "800 30px system-ui, -apple-system, Segoe UI, Roboto, sans-serif";
@@ -456,56 +619,74 @@
       ctx.fillText(judgeText, (W - m.width) / 2, judgeY - 90);
     }
 
-    // Instructions
     ctx.fillStyle = "rgba(230,237,243,0.65)";
     ctx.font = "600 14px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace";
-    ctx.fillText(`DIFF: ${currentDiffKey.toUpperCase()}   SHAKE TH: ${DIFF[currentDiffKey].shakeThreshold.toFixed(1)}`, 18, H - 24);
-
+    ctx.fillText(
+      `DIFF: ${currentDiffKey.toUpperCase()}   TH: ${DIFF[currentDiffKey].shakeThreshold.toFixed(1)}   COOL: ${shakeCooldownMs}ms`,
+      18, H - 24
+    );
     ctx.restore();
+  }
+
+  function roundRect(ctx, x, y, w, h, r) {
+    const rr = Math.min(r, w/2, h/2);
+    ctx.beginPath();
+    ctx.moveTo(x + rr, y);
+    ctx.arcTo(x + w, y, x + w, y + h, rr);
+    ctx.arcTo(x + w, y + h, x, y + h, rr);
+    ctx.arcTo(x, y + h, x, y, rr);
+    ctx.arcTo(x, y, x + w, y, rr);
+    ctx.closePath();
   }
 
   // -----------------------------
   // Main loop
   // -----------------------------
+  let lastFrameMs = 0;
   function frame(ts) {
     if (!running) return;
     const t = nowSec();
-    processMisses(t);
+    const nowMs = performance.now();
+    const dtSec = lastFrameMs ? ((nowMs - lastFrameMs) / 1000) : (1/60);
+    lastFrameMs = nowMs;
+
+    processMissesAndHold(t, dtSec);
     draw(t);
 
-    // end condition: all notes judged and passed
     const lastNote = notes[notes.length - 1];
-    if (lastNote && (t - lastNote.t) > 1.0) {
-      // stop automatically
-      stopGame();
-      showJudge("FINISH", 0);
-      return;
+    if (lastNote) {
+      const endT = (lastNote.type === "hold" ? lastNote.tEnd : lastNote.t);
+      if (t - endT > 1.2) {
+        stopGame();
+        showJudge("FINISH", 0);
+        return;
+      }
     }
 
-    lastFrame = ts;
     requestAnimationFrame(frame);
   }
 
   function startGame() {
     currentDiffKey = document.getElementById("difficulty").value;
     buildChart(currentDiffKey);
-
     ensureAudio();
+
     running = true;
     startTime = performance.now();
-    lastFrame = startTime;
-    lastShakeAt = -999;
+    lastFrameMs = 0;
+    lastShakeAtMs = -999;
+    lastMag = 0;
+    holdEnergy = 0;
+    holdLowSinceMs = null;
 
     showJudge("READY", 0);
 
-    // A simple metronome click to help timing (optional)
-    // (Not a full song: minimal sample)
+    // simple metronome
     const p = DIFF[currentDiffKey];
     const beatMs = 60000 / p.bpm;
     let metCount = 0;
     const metId = setInterval(() => {
       if (!running) { clearInterval(metId); return; }
-      // accent every 4
       const f = (metCount % 4 === 0) ? 520 : 420;
       beep(f, 0.03, 0.04);
       metCount++;
@@ -519,11 +700,10 @@
   }
 
   // -----------------------------
-  // Shake detection
+  // Shake / motion handling
+  //  - 軽い振りで反応：thresholdを下げる + delta倍率
+  //  - hold維持：thresholdより低いdeltaでもenergy加算
   // -----------------------------
-  // We measure acceleration magnitude; if it crosses a threshold and passes cooldown, treat as an input.
-  let lastMag = 0;
-
   function onMotion(e) {
     if (!running) return;
     const acc = e.accelerationIncludingGravity || e.acceleration;
@@ -532,42 +712,51 @@
     const ax = acc.x || 0, ay = acc.y || 0, az = acc.z || 0;
     const mag = Math.sqrt(ax*ax + ay*ay + az*az);
 
-    // High-pass-ish: compare with previous magnitude
-    const delta = Math.abs(mag - lastMag);
+    // 以前との差（高域っぽくする）
+    let delta = Math.abs(mag - lastMag);
     lastMag = mag;
+
+    // 小さな動きを拾いやすく（体感調整）
+    delta *= 1.6;
 
     const threshold = DIFF[currentDiffKey].shakeThreshold;
 
+    // hold維持用：thresholdの一部でもenergy追加
+    if (delta > threshold * HOLD.sustainDeltaFactor) {
+      holdEnergy = Math.min(1, holdEnergy + HOLD.addGain * (delta / threshold));
+    }
+
+    // tap/hold開始：threshold超えで1入力（クールダウンあり）
     const nowMs = performance.now();
-    if (delta > threshold && (nowMs - lastShakeAt) > shakeCooldownMs) {
-      lastShakeAt = nowMs;
-      doJudge(nowSec());
+    if (delta > threshold && (nowMs - lastShakeAtMs) > shakeCooldownMs) {
+      lastShakeAtMs = nowMs;
+      judgeTapAt(nowSec());
     }
   }
 
-  // Desktop fallback: space key to "shake"
+  // desktop fallback: Space key
   window.addEventListener("keydown", (e) => {
     if (e.code === "Space") {
       e.preventDefault();
       if (!running) return;
+
+      // PCはモーションが無いので、Spaceでenergyも入れる（hold維持テスト用）
+      holdEnergy = Math.min(1, holdEnergy + 0.22);
+
       const nowMs = performance.now();
-      if ((nowMs - lastShakeAt) > shakeCooldownMs) {
-        lastShakeAt = nowMs;
-        doJudge(nowSec());
+      if ((nowMs - lastShakeAtMs) > shakeCooldownMs) {
+        lastShakeAtMs = nowMs;
+        judgeTapAt(nowSec());
       }
     }
   }, { passive: false });
 
-  // -----------------------------
-  // Motion permission (iOS)
-  // -----------------------------
   async function requestMotionPermission() {
     try {
       if (typeof DeviceMotionEvent === "undefined") {
         alert("この端末/ブラウザはDeviceMotionに対応していない可能性があります。");
         return;
       }
-      // iOS 13+ requires permission
       if (typeof DeviceMotionEvent.requestPermission === "function") {
         const res = await DeviceMotionEvent.requestPermission();
         if (res !== "granted") {
@@ -583,32 +772,21 @@
     }
   }
 
-  // -----------------------------
   // UI wiring
-  // -----------------------------
   document.getElementById("start").addEventListener("click", () => {
     if (running) return;
     startGame();
   });
+  document.getElementById("stop").addEventListener("click", () => stopGame());
+  document.getElementById("motionPerm").addEventListener("click", () => requestMotionPermission());
 
-  document.getElementById("stop").addEventListener("click", () => {
-    stopGame();
-  });
-
-  document.getElementById("motionPerm").addEventListener("click", () => {
-    requestMotionPermission();
-  });
-
-  // Non-iOS: attach motion listener directly (if supported)
-  // (On many Android browsers it works without explicit permission)
+  // Android等は許可不要の場合がある
   if (typeof DeviceMotionEvent !== "undefined" && typeof DeviceMotionEvent.requestPermission !== "function") {
     window.addEventListener("devicemotion", onMotion, { passive: true });
   }
 
-  // Initial draw
+  // initial render
   draw(0);
-
-  // Expose for debugging
   window.__ShakeRhythm = { startGame, stopGame };
 })();
 </script>
