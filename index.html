@@ -1,0 +1,616 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
+  <title>Shake Rhythm (HTML1枚)</title>
+  <style>
+    :root { color-scheme: dark; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif;
+      background: #0b0f14;
+      color: #e6edf3;
+      display: flex;
+      min-height: 100vh;
+      flex-direction: column;
+    }
+    header {
+      padding: 12px 14px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    header .title { font-weight: 700; letter-spacing: 0.2px; }
+    header .controls {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-left: auto;
+    }
+    select, button {
+      background: rgba(255,255,255,0.08);
+      color: #e6edf3;
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 14px;
+      outline: none;
+    }
+    button { cursor: pointer; }
+    button.primary {
+      background: #2f81f7;
+      border-color: rgba(47,129,247,0.6);
+      color: #07121f;
+      font-weight: 700;
+    }
+    button.danger {
+      background: rgba(248,81,73,0.15);
+      border-color: rgba(248,81,73,0.4);
+      color: #ffb4b0;
+    }
+    main {
+      flex: 1;
+      display: grid;
+      place-items: center;
+      padding: 10px;
+    }
+    canvas {
+      width: min(94vw, 520px);
+      height: min(78vh, 860px);
+      background: radial-gradient(1200px 900px at 50% 20%, rgba(47,129,247,0.08), transparent 60%),
+                  linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
+      border: 1px solid rgba(255,255,255,0.10);
+      border-radius: 16px;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.45);
+      touch-action: none;
+    }
+    footer {
+      padding: 10px 14px 14px;
+      border-top: 1px solid rgba(255,255,255,0.08);
+      font-size: 12px;
+      color: rgba(230,237,243,0.75);
+      line-height: 1.45;
+    }
+    .row {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .pill {
+      display: inline-flex;
+      gap: 8px;
+      align-items: center;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(0,0,0,0.18);
+      padding: 8px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      color: rgba(230,237,243,0.9);
+    }
+    .mono { font-variant-numeric: tabular-nums; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  </style>
+</head>
+
+<body>
+<header>
+  <div class="title">Shake Rhythm — 振って叩く音ゲー（HTML1枚）</div>
+
+  <div class="controls">
+    <select id="difficulty">
+      <option value="easy">EASY（ゆっくり）</option>
+      <option value="normal" selected>NORMAL（標準）</option>
+      <option value="hard">HARD（速い）</option>
+    </select>
+    <button id="motionPerm">モーション許可（iPhone用）</button>
+    <button class="primary" id="start">START</button>
+    <button class="danger" id="stop">STOP</button>
+  </div>
+</header>
+
+<main>
+  <canvas id="game" width="520" height="860"></canvas>
+</main>
+
+<footer>
+  <div class="row">
+    <span class="pill">操作: <b>スマホを振る</b>（タイミングで判定）</span>
+    <span class="pill">重なり: 判定ライン付近に複数ノーツがあれば<b>一度の振りでまとめて判定</b></span>
+    <span class="pill">判定: <span class="mono">PERFECT / GREAT / GOOD / MISS</span></span>
+  </div>
+  <div style="margin-top:10px">
+    メモ: iOSはセンサー利用にユーザー操作による許可が必要です（「モーション許可」→「START」の順）。<br>
+    デスクトップではスペースキーでも叩けます（動作確認用）。
+  </div>
+</footer>
+
+<script>
+(() => {
+  // -----------------------------
+  // Utility
+  // -----------------------------
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+
+  // -----------------------------
+  // Canvas setup
+  // -----------------------------
+  const canvas = document.getElementById("game");
+  const ctx = canvas.getContext("2d");
+
+  // -----------------------------
+  // Audio (simple beep)
+  // -----------------------------
+  let audioCtx = null;
+
+  function ensureAudio() {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === "suspended") audioCtx.resume();
+  }
+
+  function beep(freq = 880, dur = 0.05, gain = 0.06) {
+    if (!audioCtx) return;
+    const t0 = audioCtx.currentTime;
+    const o = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    o.frequency.value = freq;
+    o.type = "square";
+    g.gain.setValueAtTime(gain, t0);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    o.connect(g).connect(audioCtx.destination);
+    o.start(t0);
+    o.stop(t0 + dur);
+  }
+
+  // -----------------------------
+  // Difficulty presets
+  // -----------------------------
+  const DIFF = {
+    easy:   { bpm: 92,  lengthBeats: 64, spawnJitter: 0.08, overlapRate: 0.22, noteSpeed: 430, shakeThreshold: 13.0 },
+    normal: { bpm: 112, lengthBeats: 80, spawnJitter: 0.06, overlapRate: 0.32, noteSpeed: 520, shakeThreshold: 12.0 },
+    hard:   { bpm: 134, lengthBeats: 96, spawnJitter: 0.05, overlapRate: 0.45, noteSpeed: 640, shakeThreshold: 11.2 },
+  };
+
+  // -----------------------------
+  // Game state
+  // -----------------------------
+  let running = false;
+  let startTime = 0;
+  let lastFrame = 0;
+  let notes = []; // {t, hit:false, judged:false}
+  let score = 0;
+  let combo = 0;
+  let maxCombo = 0;
+  let counts = { perfect:0, great:0, good:0, miss:0 };
+  let lastShakeAt = -999;
+  let shakeCooldownMs = 140; // avoid double triggers
+  let currentDiffKey = "normal";
+  let judgeText = "";
+  let judgeTextUntil = 0;
+
+  // Layout constants
+  const W = canvas.width;
+  const H = canvas.height;
+  const laneX = W * 0.5;
+  const judgeY = H * 0.78;
+  const spawnY = -40;
+
+  // Judgment windows (seconds), relative to note time when it crosses judge line
+  const WINDOWS = [
+    { name: "PERFECT", dt: 0.060, pts: 100, key: "perfect", freq: 1200 },
+    { name: "GREAT",   dt: 0.100, pts: 70,  key: "great",   freq: 980  },
+    { name: "GOOD",    dt: 0.140, pts: 40,  key: "good",    freq: 740  },
+  ];
+
+  // -----------------------------
+  // Note chart generation (with overlaps)
+  // -----------------------------
+  function buildChart(diffKey) {
+    const p = DIFF[diffKey];
+    const beatSec = 60 / p.bpm;
+
+    const arr = [];
+    // Create a rhythm: mostly 1/1, some 1/2, some overlaps at same timestamp.
+    for (let i = 0; i < p.lengthBeats; i++) {
+      const baseT = i * beatSec;
+
+      // main note (every beat)
+      arr.push({ t: baseT });
+
+      // occasional off-beat note (8th)
+      if (Math.random() < 0.35) {
+        arr.push({ t: baseT + 0.5 * beatSec });
+      }
+
+      // overlap: additional note(s) at same moment
+      if (Math.random() < p.overlapRate) {
+        const extra = (Math.random() < 0.35) ? 2 : 1; // sometimes triple stack
+        for (let k = 0; k < extra; k++) {
+          // same timestamp, tiny jitter allowed to "almost same" but still overlapping visually
+          const jitter = (Math.random() * 2 - 1) * p.spawnJitter * beatSec;
+          arr.push({ t: baseT + jitter });
+        }
+      }
+    }
+
+    // sort and normalize start at ~2 seconds after start for readiness
+    arr.sort((a,b)=>a.t-b.t);
+    const leadIn = 1.8;
+    notes = arr.map(n => ({ t: n.t + leadIn, hit: false, judged: false }));
+
+    // Reset scoring
+    score = 0; combo = 0; maxCombo = 0;
+    counts = { perfect:0, great:0, good:0, miss:0 };
+    judgeText = "";
+    judgeTextUntil = 0;
+  }
+
+  // -----------------------------
+  // Timing helpers
+  // -----------------------------
+  function nowSec() {
+    return (performance.now() - startTime) / 1000;
+  }
+
+  // note position: when time == note.t, it is at judge line
+  function noteY(noteTime, t, speedPxPerSec) {
+    const dt = noteTime - t; // positive if in future
+    // if dt is large, the note is above
+    return judgeY - dt * speedPxPerSec;
+  }
+
+  // -----------------------------
+  // Judgment on shake
+  // -----------------------------
+  function doJudge(actionTimeSec) {
+    if (!running) return;
+
+    // find notes near judge line within GOOD window, but allow stacked notes (same timing)
+    const p = DIFF[currentDiffKey];
+
+    let judgedAny = false;
+    let bestWindow = null;
+
+    // Collect hittable notes (not judged yet) within GOOD range.
+    const hittable = [];
+    for (const n of notes) {
+      if (n.judged) continue;
+      const dt = Math.abs(actionTimeSec - n.t);
+      if (dt <= WINDOWS[WINDOWS.length - 1].dt) {
+        hittable.push({ n, dt });
+      }
+    }
+
+    if (hittable.length === 0) {
+      // If the user shakes with no notes in window: treat as "空振り" (no penalty here, but you can penalize if you like)
+      showJudge("EMPTY", 0);
+      beep(220, 0.04, 0.04);
+      return;
+    }
+
+    // Determine the grade per note; if multiple notes, grade each separately.
+    // The UI text shows the best grade among them (typical feel).
+    for (const h of hittable) {
+      const { n, dt } = h;
+      let hitGrade = null;
+      for (const w of WINDOWS) {
+        if (dt <= w.dt) { hitGrade = w; break; }
+      }
+      if (hitGrade) {
+        n.hit = true;
+        n.judged = true;
+        judgedAny = true;
+
+        score += hitGrade.pts;
+        combo += 1;
+        maxCombo = Math.max(maxCombo, combo);
+        counts[hitGrade.key] += 1;
+
+        // sound per note, slightly different freq
+        beep(hitGrade.freq, 0.05, 0.06);
+
+        if (!bestWindow || hitGrade.pts > bestWindow.pts) bestWindow = hitGrade;
+      }
+    }
+
+    if (judgedAny) {
+      showJudge(bestWindow ? bestWindow.name : "HIT", bestWindow ? bestWindow.pts : 0);
+    }
+  }
+
+  function showJudge(text, pts) {
+    judgeText = pts > 0 ? `${text} +${pts}` : text;
+    judgeTextUntil = performance.now() + 520;
+  }
+
+  // -----------------------------
+  // Miss processing
+  // -----------------------------
+  function processMisses(t) {
+    // Any note that passed beyond GOOD window and not judged => miss
+    const missAfter = WINDOWS[WINDOWS.length - 1].dt;
+    for (const n of notes) {
+      if (n.judged) continue;
+      if (t - n.t > missAfter) {
+        n.judged = true;
+        n.hit = false;
+        counts.miss += 1;
+        combo = 0;
+        showJudge("MISS", 0);
+      }
+    }
+  }
+
+  // -----------------------------
+  // Rendering
+  // -----------------------------
+  function draw(t) {
+    const p = DIFF[currentDiffKey];
+    ctx.clearRect(0, 0, W, H);
+
+    // Background grid
+    ctx.save();
+    ctx.globalAlpha = 0.18;
+    ctx.strokeStyle = "#9fb6d9";
+    for (let y=40; y<H; y+=60) {
+      ctx.beginPath();
+      ctx.moveTo(20, y);
+      ctx.lineTo(W-20, y);
+      ctx.stroke();
+    }
+    ctx.restore();
+
+    // Lane / judge line
+    ctx.save();
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = "rgba(47,129,247,0.8)";
+    ctx.beginPath();
+    ctx.moveTo(40, judgeY);
+    ctx.lineTo(W-40, judgeY);
+    ctx.stroke();
+
+    // Windows visualization
+    ctx.globalAlpha = 0.10;
+    ctx.fillStyle = "#2f81f7";
+    const pxGood = WINDOWS[2].dt * p.noteSpeed;
+    const pxGreat = WINDOWS[1].dt * p.noteSpeed;
+    const pxPerfect = WINDOWS[0].dt * p.noteSpeed;
+    ctx.fillRect(40, judgeY - pxGood, W-80, pxGood*2);
+    ctx.globalAlpha = 0.14;
+    ctx.fillRect(40, judgeY - pxGreat, W-80, pxGreat*2);
+    ctx.globalAlpha = 0.18;
+    ctx.fillRect(40, judgeY - pxPerfect, W-80, pxPerfect*2);
+    ctx.restore();
+
+    // Notes
+    const visibleTop = -80, visibleBottom = H + 80;
+    const stacks = [];
+
+    // group notes by near-equal time to make overlaps visually "stacked"
+    // (This is purely visual; timing is handled per note.)
+    const tol = 0.012; // seconds
+    for (const n of notes) {
+      const y = noteY(n.t, t, p.noteSpeed);
+      if (y < visibleTop || y > visibleBottom) continue;
+      if (n.judged && y > judgeY + 20) continue;
+
+      let found = false;
+      for (const s of stacks) {
+        if (Math.abs(s.t - n.t) < tol) { s.items.push({n,y}); found = true; break; }
+      }
+      if (!found) stacks.push({ t: n.t, items: [{n,y}] });
+    }
+
+    // draw each stack with slight x offsets so overlap is apparent
+    for (const s of stacks) {
+      const items = s.items;
+      items.sort((a,b)=>a.y-b.y);
+      for (let i=0; i<items.length; i++) {
+        const { n, y } = items[i];
+        const offset = (i - (items.length-1)/2) * 14;
+
+        const r = 14;
+        ctx.beginPath();
+        ctx.fillStyle = n.judged ? (n.hit ? "rgba(46,160,67,0.85)" : "rgba(248,81,73,0.55)") : "rgba(230,237,243,0.85)";
+        ctx.strokeStyle = "rgba(0,0,0,0.35)";
+        ctx.lineWidth = 2;
+        ctx.arc(laneX + offset, y, r, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+
+        // inner ring for unjudged
+        if (!n.judged) {
+          ctx.beginPath();
+          ctx.strokeStyle = "rgba(47,129,247,0.7)";
+          ctx.lineWidth = 2;
+          ctx.arc(laneX + offset, y, r-5, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+      }
+    }
+
+    // HUD
+    ctx.save();
+    ctx.fillStyle = "rgba(230,237,243,0.92)";
+    ctx.font = "700 22px system-ui, -apple-system, Segoe UI, Roboto, sans-serif";
+    ctx.fillText(`SCORE  ${score}`, 18, 36);
+
+    ctx.font = "600 16px system-ui, -apple-system, Segoe UI, Roboto, sans-serif";
+    ctx.fillStyle = "rgba(230,237,243,0.75)";
+    ctx.fillText(`COMBO  ${combo}   (MAX ${maxCombo})`, 18, 60);
+
+    // Accuracy summary
+    ctx.fillText(
+      `P:${counts.perfect}  G:${counts.great}  O:${counts.good}  M:${counts.miss}`,
+      18, 84
+    );
+
+    // Judge text
+    if (performance.now() < judgeTextUntil) {
+      ctx.fillStyle = "rgba(255,255,255,0.92)";
+      ctx.font = "800 30px system-ui, -apple-system, Segoe UI, Roboto, sans-serif";
+      const m = ctx.measureText(judgeText);
+      ctx.fillText(judgeText, (W - m.width) / 2, judgeY - 90);
+    }
+
+    // Instructions
+    ctx.fillStyle = "rgba(230,237,243,0.65)";
+    ctx.font = "600 14px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace";
+    ctx.fillText(`DIFF: ${currentDiffKey.toUpperCase()}   SHAKE TH: ${DIFF[currentDiffKey].shakeThreshold.toFixed(1)}`, 18, H - 24);
+
+    ctx.restore();
+  }
+
+  // -----------------------------
+  // Main loop
+  // -----------------------------
+  function frame(ts) {
+    if (!running) return;
+    const t = nowSec();
+    processMisses(t);
+    draw(t);
+
+    // end condition: all notes judged and passed
+    const lastNote = notes[notes.length - 1];
+    if (lastNote && (t - lastNote.t) > 1.0) {
+      // stop automatically
+      stopGame();
+      showJudge("FINISH", 0);
+      return;
+    }
+
+    lastFrame = ts;
+    requestAnimationFrame(frame);
+  }
+
+  function startGame() {
+    currentDiffKey = document.getElementById("difficulty").value;
+    buildChart(currentDiffKey);
+
+    ensureAudio();
+    running = true;
+    startTime = performance.now();
+    lastFrame = startTime;
+    lastShakeAt = -999;
+
+    showJudge("READY", 0);
+
+    // A simple metronome click to help timing (optional)
+    // (Not a full song: minimal sample)
+    const p = DIFF[currentDiffKey];
+    const beatMs = 60000 / p.bpm;
+    let metCount = 0;
+    const metId = setInterval(() => {
+      if (!running) { clearInterval(metId); return; }
+      // accent every 4
+      const f = (metCount % 4 === 0) ? 520 : 420;
+      beep(f, 0.03, 0.04);
+      metCount++;
+    }, beatMs);
+
+    requestAnimationFrame(frame);
+  }
+
+  function stopGame() {
+    running = false;
+  }
+
+  // -----------------------------
+  // Shake detection
+  // -----------------------------
+  // We measure acceleration magnitude; if it crosses a threshold and passes cooldown, treat as an input.
+  let lastMag = 0;
+
+  function onMotion(e) {
+    if (!running) return;
+    const acc = e.accelerationIncludingGravity || e.acceleration;
+    if (!acc) return;
+
+    const ax = acc.x || 0, ay = acc.y || 0, az = acc.z || 0;
+    const mag = Math.sqrt(ax*ax + ay*ay + az*az);
+
+    // High-pass-ish: compare with previous magnitude
+    const delta = Math.abs(mag - lastMag);
+    lastMag = mag;
+
+    const threshold = DIFF[currentDiffKey].shakeThreshold;
+
+    const nowMs = performance.now();
+    if (delta > threshold && (nowMs - lastShakeAt) > shakeCooldownMs) {
+      lastShakeAt = nowMs;
+      doJudge(nowSec());
+    }
+  }
+
+  // Desktop fallback: space key to "shake"
+  window.addEventListener("keydown", (e) => {
+    if (e.code === "Space") {
+      e.preventDefault();
+      if (!running) return;
+      const nowMs = performance.now();
+      if ((nowMs - lastShakeAt) > shakeCooldownMs) {
+        lastShakeAt = nowMs;
+        doJudge(nowSec());
+      }
+    }
+  }, { passive: false });
+
+  // -----------------------------
+  // Motion permission (iOS)
+  // -----------------------------
+  async function requestMotionPermission() {
+    try {
+      if (typeof DeviceMotionEvent === "undefined") {
+        alert("この端末/ブラウザはDeviceMotionに対応していない可能性があります。");
+        return;
+      }
+      // iOS 13+ requires permission
+      if (typeof DeviceMotionEvent.requestPermission === "function") {
+        const res = await DeviceMotionEvent.requestPermission();
+        if (res !== "granted") {
+          alert("モーション許可が拒否されました。設定から許可してください。");
+          return;
+        }
+      }
+      window.addEventListener("devicemotion", onMotion, { passive: true });
+      alert("モーションを有効化しました。STARTで開始できます。");
+    } catch (err) {
+      console.error(err);
+      alert("モーション許可の取得に失敗しました。");
+    }
+  }
+
+  // -----------------------------
+  // UI wiring
+  // -----------------------------
+  document.getElementById("start").addEventListener("click", () => {
+    if (running) return;
+    startGame();
+  });
+
+  document.getElementById("stop").addEventListener("click", () => {
+    stopGame();
+  });
+
+  document.getElementById("motionPerm").addEventListener("click", () => {
+    requestMotionPermission();
+  });
+
+  // Non-iOS: attach motion listener directly (if supported)
+  // (On many Android browsers it works without explicit permission)
+  if (typeof DeviceMotionEvent !== "undefined" && typeof DeviceMotionEvent.requestPermission !== "function") {
+    window.addEventListener("devicemotion", onMotion, { passive: true });
+  }
+
+  // Initial draw
+  draw(0);
+
+  // Expose for debugging
+  window.__ShakeRhythm = { startGame, stopGame };
+})();
+</script>
+</body>
+</html>
