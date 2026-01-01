@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
-  <title>Shake Rhythm — Pro UI</title>
+  <title>Shake Rhythm — L/R Lane + FX</title>
   <style>
     :root{
       color-scheme: dark;
@@ -28,28 +28,14 @@
       color: var(--fg);
       overflow:hidden;
     }
-
-    /* App shell */
-    .app{
-      position:relative;
-      width:100vw; height:100vh;
-      display:flex;
-      flex-direction:column;
-    }
+    .app{ position:relative; width:100vw; height:100vh; display:flex; flex-direction:column; }
     .topbar{
-      height:58px;
-      display:flex;
-      align-items:center;
-      padding:0 14px;
-      gap:12px;
+      height:58px; display:flex; align-items:center; padding:0 14px; gap:12px; flex-wrap:wrap;
       border-bottom:1px solid var(--line);
       background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
       backdrop-filter: blur(10px);
     }
-    .brand{
-      display:flex; align-items:center; gap:10px;
-      font-weight:800; letter-spacing:.2px;
-    }
+    .brand{ display:flex; align-items:center; gap:10px; font-weight:900; letter-spacing:.2px; }
     .logo{
       width:26px;height:26px;border-radius:8px;
       background: radial-gradient(circle at 30% 30%, rgba(45,212,255,.95), rgba(47,129,247,.85) 40%, rgba(0,0,0,.0) 70%),
@@ -58,18 +44,15 @@
       box-shadow: 0 10px 30px rgba(47,129,247,.25);
     }
     .spacer{ flex:1; }
-
     .pill{
       display:inline-flex; align-items:center; gap:8px;
-      padding:8px 10px;
-      border-radius:999px;
+      padding:8px 10px; border-radius:999px;
       border:1px solid rgba(255,255,255,.12);
       background: rgba(0,0,0,.18);
       color: var(--muted);
-      font-size:12px;
-      white-space:nowrap;
+      font-size:12px; white-space:nowrap;
     }
-    .mono{ font-variant-numeric: tabular-nums; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .mono{ font-variant-numeric:tabular-nums; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
 
     .btn{
       appearance:none;
@@ -78,8 +61,7 @@
       color: var(--fg);
       padding:10px 12px;
       border-radius:12px;
-      font-weight:700;
-      letter-spacing:.2px;
+      font-weight:800;
       cursor:pointer;
       transition: transform .06s ease, background .12s ease, border-color .12s ease;
     }
@@ -90,18 +72,9 @@
       border-color: rgba(47,129,247,.70);
       box-shadow: 0 12px 30px rgba(47,129,247,.22);
     }
-    .btn.ghost{
-      background: rgba(255,255,255,.04);
-    }
+    .btn.ghost{ background: rgba(255,255,255,.04); }
 
-    .main{
-      position:relative;
-      flex:1;
-      display:grid;
-      place-items:center;
-      padding:10px;
-    }
-
+    .main{ position:relative; flex:1; display:grid; place-items:center; padding:10px; }
     canvas{
       width:min(95vw, 560px);
       height:min(82vh, 920px);
@@ -114,15 +87,7 @@
       display:block;
       touch-action:none;
     }
-
-    /* Overlays */
-    .overlay{
-      position:absolute;
-      inset:0;
-      display:grid;
-      place-items:center;
-      pointer-events:none;
-    }
+    .overlay{ position:absolute; inset:0; display:grid; place-items:center; pointer-events:none; }
     .panel{
       width:min(92vw, 520px);
       border-radius:22px;
@@ -133,58 +98,28 @@
       pointer-events:auto;
       backdrop-filter: blur(14px);
     }
-    .panel h1{
-      margin:0 0 8px 0;
-      font-size:22px;
-      letter-spacing:.2px;
-    }
-    .panel p{
-      margin:0 0 14px 0;
-      color: var(--muted);
-      line-height:1.5;
-      font-size:13px;
-    }
-    .grid{
-      display:grid;
-      grid-template-columns: 1fr 1fr;
-      gap:10px;
-      margin:10px 0 12px;
-    }
+    .panel h1{ margin:0 0 8px 0; font-size:22px; letter-spacing:.2px; }
+    .panel p{ margin:0 0 14px 0; color: var(--muted); line-height:1.5; font-size:13px; }
+    .grid{ display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin:10px 0 12px; }
     .card{
-      border-radius:16px;
-      border:1px solid rgba(255,255,255,.12);
+      border-radius:16px; border:1px solid rgba(255,255,255,.12);
       background: rgba(0,0,0,.18);
       padding:12px 12px;
     }
     label{ display:block; font-size:12px; color:var(--muted); margin-bottom:6px; }
-    select, input[type="range"]{
-      width:100%;
-    }
+    select, input[type="range"]{ width:100%; }
     select{
-      border-radius:12px;
-      padding:10px 10px;
+      border-radius:12px; padding:10px 10px;
       border:1px solid rgba(255,255,255,.14);
       background: rgba(255,255,255,.06);
       color: var(--fg);
       outline:none;
-      font-weight:700;
+      font-weight:800;
     }
-    input[type="range"]{
-      accent-color: var(--blue);
-    }
-    .row{
-      display:flex;
-      gap:10px;
-      flex-wrap:wrap;
-      align-items:center;
-      justify-content:flex-end;
-      margin-top:10px;
-    }
-
+    input[type="range"]{ accent-color: var(--blue); }
+    .row{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:flex-end; margin-top:10px; }
     .toast{
-      position:absolute;
-      left:50%;
-      transform:translateX(-50%);
+      position:absolute; left:50%; transform:translateX(-50%);
       bottom:14px;
       padding:10px 12px;
       border-radius:999px;
@@ -198,7 +133,6 @@
       backdrop-filter: blur(10px);
     }
     .toast.show{ opacity:1; }
-
     .hidden{ display:none !important; }
   </style>
 </head>
@@ -207,8 +141,8 @@
 <div class="app">
   <div class="topbar">
     <div class="brand"><div class="logo"></div>Shake Rhythm</div>
-    <div class="pill">Input: <b>縦 / 横 / 斜め</b> 対応</div>
-    <div class="pill">Mode: <span class="mono" id="modeText">TAP</span></div>
+    <div class="pill">Lane: <b>L / R</b></div>
+    <div class="pill">FX: <b>MAX</b></div>
     <div class="spacer"></div>
     <button class="btn ghost" id="btnPerm">モーション許可</button>
     <button class="btn ghost" id="btnPause">一時停止</button>
@@ -218,13 +152,12 @@
   <div class="main">
     <canvas id="game" width="560" height="920"></canvas>
 
-    <!-- Start panel -->
     <div class="overlay" id="ovStart">
       <div class="panel">
         <h1>Shake Rhythm</h1>
         <p>
-          スマホを<b>軽く振る</b>だけでノーツ判定。縦振り・横振りどちらでもOK。<br/>
-          iPhoneは「モーション許可」→「START」の順で。
+          ノーツは<b>左/右レーン</b>に降ってきます。<br/>
+          スマホは<b>縦振り/横振り</b>どちらでも入力OK（軽くで反応）。
         </p>
 
         <div class="grid">
@@ -239,18 +172,18 @@
 
           <div class="card">
             <label>感度（高いほど軽く反応）</label>
-            <input id="sens" type="range" min="1.10" max="2.10" step="0.01" value="1.70"/>
-            <div class="pill" style="margin-top:10px;">SENS: <span class="mono" id="sensText">1.70</span></div>
+            <input id="sens" type="range" min="1.10" max="2.30" step="0.01" value="1.80"/>
+            <div class="pill" style="margin-top:10px;">SENS: <span class="mono" id="sensText">1.80</span></div>
           </div>
 
           <div class="card">
             <label>SE音量</label>
-            <input id="seVol" type="range" min="0" max="1" step="0.01" value="0.65"/>
-            <div class="pill" style="margin-top:10px;">SE: <span class="mono" id="seText">0.65</span></div>
+            <input id="seVol" type="range" min="0" max="1" step="0.01" value="0.70"/>
+            <div class="pill" style="margin-top:10px;">SE: <span class="mono" id="seText">0.70</span></div>
           </div>
 
           <div class="card">
-            <label>BGM音量（簡易トラック）</label>
+            <label>BGM音量</label>
             <input id="bgmVol" type="range" min="0" max="1" step="0.01" value="0.55"/>
             <div class="pill" style="margin-top:10px;">BGM: <span class="mono" id="bgmText">0.55</span></div>
           </div>
@@ -263,7 +196,6 @@
       </div>
     </div>
 
-    <!-- Result panel -->
     <div class="overlay hidden" id="ovResult">
       <div class="panel">
         <h1>RESULT</h1>
@@ -293,7 +225,6 @@
   const ovStart = document.getElementById("ovStart");
   const ovResult = document.getElementById("ovResult");
   const toast = document.getElementById("toast");
-  const modeText = document.getElementById("modeText");
 
   const elDiff = document.getElementById("difficulty");
   const elSens = document.getElementById("sens");
@@ -303,44 +234,44 @@
   const elBgmVol = document.getElementById("bgmVol");
   const elBgmText = document.getElementById("bgmText");
 
-  // topbar buttons
   const btnPerm = document.getElementById("btnPerm");
   const btnPause = document.getElementById("btnPause");
   const btnRestart = document.getElementById("btnRestart");
-
-  // start panel buttons
   const btnStart = document.getElementById("btnStart");
   const btnHow = document.getElementById("btnHow");
 
-  // result panel
   const btnBack = document.getElementById("btnBack");
   const btnAgain = document.getElementById("btnAgain");
+
   const resultSummary = document.getElementById("resultSummary");
   const rScore = document.getElementById("rScore");
   const rMaxCombo = document.getElementById("rMaxCombo");
   const rP = document.getElementById("rP");
   const rGOM = document.getElementById("rGOM");
 
-  // ---------- UI wiring ----------
+  function fmt2(x){ return (Math.round(x*100)/100).toFixed(2); }
   function showToast(msg){
     toast.textContent = msg;
     toast.classList.add("show");
     clearTimeout(showToast._t);
-    showToast._t = setTimeout(() => toast.classList.remove("show"), 1200);
+    showToast._t = setTimeout(()=>toast.classList.remove("show"), 1200);
   }
-  function fmt2(x){ return (Math.round(x*100)/100).toFixed(2); }
 
-  elSens.addEventListener("input", ()=>{ elSensText.textContent = fmt2(parseFloat(elSens.value)); });
-  elSeVol.addEventListener("input", ()=>{ elSeText.textContent = fmt2(parseFloat(elSeVol.value)); });
-  elBgmVol.addEventListener("input", ()=>{ elBgmText.textContent = fmt2(parseFloat(elBgmVol.value)); });
+  elSens.addEventListener("input", ()=> elSensText.textContent = fmt2(parseFloat(elSens.value)));
+  elSeVol.addEventListener("input", ()=> elSeText.textContent = fmt2(parseFloat(elSeVol.value)));
+  elBgmVol.addEventListener("input", ()=> elBgmText.textContent = fmt2(parseFloat(elBgmVol.value)));
+  btnHow.addEventListener("click", ()=> showToast("タイミングで軽く振る（縦/横/斜めOK）。ノーツは左右レーンに降ってきます。"));
 
-  btnHow.addEventListener("click", ()=>{
-    showToast("操作：ノーツが判定ラインに来た瞬間に、軽く振る（縦/横どちらでもOK）");
-  });
-
-  // ---------- Game constants ----------
+  // ---------- Constants ----------
   const W = canvas.width, H = canvas.height;
-  const laneX = W * 0.5;
+
+  // Lane positions (左右にずらす)
+  // ※見た目が“本物っぽい”ように、中央から左右へ明確に分離
+  const LANE_OFFSET = 80;
+  const laneCenterX = W * 0.5;
+  const laneXL = laneCenterX - LANE_OFFSET;
+  const laneXR = laneCenterX + LANE_OFFSET;
+
   const judgeY = H * 0.79;
 
   const DIFF = {
@@ -355,29 +286,24 @@
     { name:"GOOD",    dt:0.140, pts: 40, key:"good"    },
   ];
 
-  // ---------- Audio (BGM + SE) ----------
+  // ---------- Audio ----------
   let audioCtx = null;
   let master = null, bgmBus = null, seBus = null;
   let bgmStarted = false;
-  let songStartAt = 0; // audioCtx time
+  let songStartAt = 0;
   let schedulerId = null;
 
-  // simple synth nodes reused
   function ensureAudio(){
     if (audioCtx) return;
     audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-
     master = audioCtx.createGain();
     bgmBus = audioCtx.createGain();
     seBus = audioCtx.createGain();
-
     bgmBus.connect(master);
     seBus.connect(master);
     master.connect(audioCtx.destination);
-
     master.gain.value = 0.9;
   }
-
   function setVolumes(){
     if (!audioCtx) return;
     seBus.gain.value = Math.max(0, Math.min(1, parseFloat(elSeVol.value)));
@@ -387,17 +313,17 @@
   function playSE(type){
     if (!audioCtx) return;
     const t0 = audioCtx.currentTime;
-
-    // small click + tone by type
     const o = audioCtx.createOscillator();
     const g = audioCtx.createGain();
-    const f = (type==="PERFECT") ? 1400 : (type==="GREAT") ? 1100 : (type==="GOOD") ? 850 : 220;
-    const dur = (type==="MISS") ? 0.08 : 0.05;
-    const amp = (type==="MISS") ? 0.11 : 0.08;
 
-    o.type = (type==="MISS") ? "sawtooth" : "square";
+    let f=900, dur=0.05, amp=0.09, wave="square";
+    if (type==="PERFECT"){ f=1600; dur=0.055; amp=0.10; wave="square"; }
+    if (type==="GREAT"){   f=1250; dur=0.050; amp=0.085; wave="square"; }
+    if (type==="GOOD"){    f=880;  dur=0.050; amp=0.075; wave="triangle"; }
+    if (type==="MISS"){    f=220;  dur=0.085; amp=0.12;  wave="sawtooth"; }
+
+    o.type = wave;
     o.frequency.setValueAtTime(f, t0);
-
     g.gain.setValueAtTime(amp, t0);
     g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
 
@@ -418,7 +344,6 @@
     o.start(t);
     o.stop(t + 0.12);
   }
-
   function hat(t){
     const bufferSize = 2 * audioCtx.sampleRate;
     const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
@@ -428,25 +353,24 @@
     const noise = audioCtx.createBufferSource();
     noise.buffer = noiseBuffer;
 
-    const bp = audioCtx.createBiquadFilter();
-    bp.type = "highpass";
-    bp.frequency.setValueAtTime(7000, t);
+    const hp = audioCtx.createBiquadFilter();
+    hp.type = "highpass";
+    hp.frequency.setValueAtTime(7600, t);
 
     const g = audioCtx.createGain();
     g.gain.setValueAtTime(0.20, t);
     g.gain.exponentialRampToValueAtTime(0.0001, t + 0.035);
 
-    noise.connect(bp).connect(g).connect(bgmBus);
+    noise.connect(hp).connect(g).connect(bgmBus);
     noise.start(t);
     noise.stop(t + 0.04);
   }
-
   function bass(t, freq){
     const o = audioCtx.createOscillator();
     const g = audioCtx.createGain();
     const lp = audioCtx.createBiquadFilter();
     lp.type = "lowpass";
-    lp.frequency.setValueAtTime(550, t);
+    lp.frequency.setValueAtTime(600, t);
 
     o.type = "triangle";
     o.frequency.setValueAtTime(freq, t);
@@ -459,7 +383,6 @@
     o.stop(t + 0.18);
   }
 
-  // audio scheduler (simple step sequencer)
   let seqStep = 0;
   function startBGM(bpm){
     ensureAudio();
@@ -468,24 +391,20 @@
 
     bgmStarted = true;
     seqStep = 0;
-    const stepDur = 60 / bpm / 2; // 8th note
+    const stepDur = 60 / bpm / 2; // 8th
     songStartAt = audioCtx.currentTime + 0.08;
 
     const lookAhead = 0.10;
-    const scheduleHorizon = 0.20;
+    const horizon = 0.20;
 
     function schedule(){
       const now = audioCtx.currentTime;
-      while (songStartAt + seqStep * stepDur < now + scheduleHorizon){
+      while (songStartAt + seqStep * stepDur < now + horizon){
         const t = songStartAt + seqStep * stepDur;
 
-        // Kick on 1,3 (every 4 steps in 8-step bar)
         if (seqStep % 8 === 0 || seqStep % 8 === 4) kick(t);
-
-        // Hat every step, accent off-beat
         hat(t);
 
-        // Bass pattern (simple)
         const barPos = seqStep % 16;
         if (barPos === 0) bass(t, 55);
         if (barPos === 6) bass(t, 62);
@@ -494,85 +413,70 @@
 
         seqStep++;
       }
-      schedulerId = setTimeout(schedule, lookAhead * 1000);
+      schedulerId = setTimeout(schedule, lookAhead*1000);
     }
     schedule();
   }
 
   function stopBGM(){
     bgmStarted = false;
-    if (schedulerId) { clearTimeout(schedulerId); schedulerId = null; }
+    if (schedulerId){ clearTimeout(schedulerId); schedulerId = null; }
   }
 
-  // ---------- Input detection (axis-aware + peak) ----------
-  let lastAx=0, lastAy=0, lastAz=0;
-  let peak = 0;
-  let peakDecayTimer = null;
-  let lastInputMs = -999;
+  // ---------- Input detection (axis aware) ----------
+  let lastAx=0,lastAy=0,lastAz=0;
+  let peak=0;
+  let peakDecayTimer=null;
+  let lastInputMs=-999;
 
-  const INPUT = {
-    cooldownMs: 72,
-    peakHoldMs: 70,
-    noiseGate: 0.32,
-    wX: 1.0, wY: 1.0, wZ: 0.70,
-  };
+  const INPUT = { cooldownMs: 72, peakHoldMs: 70, noiseGate: 0.32, wX:1.0,wY:1.0,wZ:0.70 };
 
   function updatePeak(val){
     peak = Math.max(peak, val);
     if (peakDecayTimer) return;
-    peakDecayTimer = setTimeout(() => {
-      peak *= 0.55;
-      peakDecayTimer = null;
-    }, INPUT.peakHoldMs);
+    peakDecayTimer = setTimeout(()=>{ peak *= 0.55; peakDecayTimer=null; }, INPUT.peakHoldMs);
   }
 
   function computeImpulse(acc){
     const ax = acc.x || 0, ay = acc.y || 0, az = acc.z || 0;
-    const dx = Math.abs(ax - lastAx);
-    const dy = Math.abs(ay - lastAy);
-    const dz = Math.abs(az - lastAz);
+    const dx = Math.abs(ax-lastAx), dy = Math.abs(ay-lastAy), dz = Math.abs(az-lastAz);
     lastAx=ax; lastAy=ay; lastAz=az;
 
-    const gdx = Math.max(0, dx - INPUT.noiseGate);
-    const gdy = Math.max(0, dy - INPUT.noiseGate);
-    const gdz = Math.max(0, dz - INPUT.noiseGate);
+    const gdx = Math.max(0, dx-INPUT.noiseGate);
+    const gdy = Math.max(0, dy-INPUT.noiseGate);
+    const gdz = Math.max(0, dz-INPUT.noiseGate);
 
-    const gain = parseFloat(elSens.value); // user control
-    const impulse = (gdx*INPUT.wX + gdy*INPUT.wY + gdz*INPUT.wZ) * gain * 1.25;
-    return impulse;
+    const gain = parseFloat(elSens.value);
+    return (gdx*INPUT.wX + gdy*INPUT.wY + gdz*INPUT.wZ) * gain * 1.25;
   }
 
   function tryInput(){
     const nowMs = performance.now();
-    if ((nowMs - lastInputMs) < INPUT.cooldownMs) return false;
+    if ((nowMs-lastInputMs) < INPUT.cooldownMs) return false;
     lastInputMs = nowMs;
     return true;
   }
 
-  // iOS permission
   async function requestMotionPermission(){
     try{
       if (typeof DeviceMotionEvent === "undefined"){
-        showToast("この端末/ブラウザはDeviceMotionに非対応の可能性");
+        showToast("DeviceMotion非対応の可能性");
         return;
       }
       if (typeof DeviceMotionEvent.requestPermission === "function"){
         const res = await DeviceMotionEvent.requestPermission();
-        if (res !== "granted"){
-          showToast("モーション許可が拒否されました");
-          return;
-        }
+        if (res !== "granted"){ showToast("モーション許可が拒否"); return; }
       }
       window.addEventListener("devicemotion", onMotion, { passive:true });
-      showToast("モーション入力を有効化しました");
+      showToast("モーション入力を有効化");
     }catch(e){
       console.error(e);
-      showToast("モーション許可に失敗しました");
+      showToast("モーション許可に失敗");
     }
   }
 
   function onMotion(e){
-    if (!state.running) return;
+    if (!state.running || state.paused) return;
     const acc = e.accelerationIncludingGravity || e.acceleration;
     if (!acc) return;
 
@@ -581,47 +485,40 @@
 
     const th = state.params.inputThreshold;
     if (peak > th && tryInput()){
-      peak = 0; // consume
+      peak = 0;
       judgeAt(getSongTimeSec());
-      // haptics (Android)
-      if (navigator.vibrate) navigator.vibrate(8);
+      if (navigator.vibrate) navigator.vibrate(10);
     }
   }
 
-  // Desktop fallback
   window.addEventListener("keydown", (e)=>{
-    if (e.code === "Space"){
+    if (e.code==="Space"){
       e.preventDefault();
-      if (!state.running) return;
+      if (!state.running || state.paused) return;
       if (tryInput()) judgeAt(getSongTimeSec());
     }
   }, { passive:false });
 
-  // Non-iOS auto attach
   if (typeof DeviceMotionEvent !== "undefined" && typeof DeviceMotionEvent.requestPermission !== "function"){
     window.addEventListener("devicemotion", onMotion, { passive:true });
   }
 
   btnPerm.addEventListener("click", requestMotionPermission);
+  elSeVol.addEventListener("input", setVolumes);
+  elBgmVol.addEventListener("input", setVolumes);
 
-  // ---------- Gameplay ----------
+  // ---------- Game state ----------
   const state = {
-    running:false,
-    paused:false,
-    ended:false,
+    running:false, paused:false, ended:false,
     params: DIFF.normal,
-    // timing
-    t0Perf: 0,
-    // chart
-    notes: [], // {t, judged, hit}
-    // score
-    score:0,
-    combo:0,
-    maxCombo:0,
+    notes: [], // {t,lane(0/1), judged, hit}
+    score:0, combo:0, maxCombo:0,
     counts:{ perfect:0, great:0, good:0, miss:0 },
-    // visuals
-    hitRipples: [], // {x,y,r,life}
-    particles: [],
+    // FX
+    hitRings: [],   // {x,y,r,life,grade,thick}
+    sparks: [],     // {x,y,vx,vy,life,grade}
+    streaks: [],    // {x0,y0,x1,y1,life,grade}
+    flash: 0,       // screen flash
     camShake: 0,
     lastFrame: 0,
   };
@@ -629,56 +526,66 @@
   function resetState(){
     state.score=0; state.combo=0; state.maxCombo=0;
     state.counts = { perfect:0, great:0, good:0, miss:0 };
-    state.hitRipples.length = 0;
-    state.particles.length = 0;
-    state.camShake = 0;
-    state.ended = false;
+    state.hitRings.length=0;
+    state.sparks.length=0;
+    state.streaks.length=0;
+    state.flash=0;
+    state.camShake=0;
+    state.ended=false;
 
-    // input reset
     lastAx=lastAy=lastAz=0;
     peak=0;
     lastInputMs=-999;
   }
 
+  // Chart: assign lane left/right
   function buildChart(params){
-    const beatSec = 60 / params.bpm;
+    const beatSec = 60/params.bpm;
     const arr = [];
-    for (let i=0; i<params.lengthBeats; i++){
-      const baseT = i * beatSec;
-
+    for (let i=0;i<params.lengthBeats;i++){
+      const baseT = i*beatSec;
       arr.push(baseT);
-      if (Math.random() < 0.35) arr.push(baseT + 0.5*beatSec);
-
-      if (Math.random() < params.overlapRate){
-        const extra = (Math.random() < 0.35) ? 2 : 1;
-        for (let k=0; k<extra; k++){
-          const jitter = (Math.random()*2 - 1) * params.spawnJitter * beatSec;
-          arr.push(baseT + jitter);
+      if (Math.random()<0.35) arr.push(baseT+0.5*beatSec);
+      if (Math.random()<params.overlapRate){
+        const extra = (Math.random()<0.35)?2:1;
+        for (let k=0;k<extra;k++){
+          const jitter = (Math.random()*2-1)*params.spawnJitter*beatSec;
+          arr.push(baseT+jitter);
         }
       }
     }
     arr.sort((a,b)=>a-b);
 
     const leadIn = 1.7;
-    state.notes = arr.map(t => ({ t: t + leadIn, judged:false, hit:false }));
+
+    // lane assignment:
+    // - ランダム基本
+    // - ただし同時刻近いものは左右に分散して見た目の“ずらし”を強化
+    const notes = [];
+    const tol = 0.012;
+    for (let i=0;i<arr.length;i++){
+      const t = arr[i];
+      let lane = (Math.random() < 0.5) ? 0 : 1;
+      // check neighbors for same timing
+      if (i>0 && Math.abs(arr[i]-arr[i-1])<tol){
+        lane = 1 - notes[notes.length-1].lane; // alternate
+      }
+      notes.push({ t: t+leadIn, lane, judged:false, hit:false });
+    }
+    state.notes = notes;
   }
 
+  // ---------- Start/Pause/Restart ----------
   function startGame(){
-    ensureAudio();
-    setVolumes();
-
+    ensureAudio(); setVolumes();
     state.params = DIFF[elDiff.value];
     resetState();
     buildChart(state.params);
 
-    // start BGM and define time mapping from audio to gameplay
     stopBGM();
     startBGM(state.params.bpm);
-    state.t0Perf = performance.now();
-    state.running = true;
-    state.paused = false;
-    modeText.textContent = "TAP";
 
+    state.running=true; state.paused=false;
     ovStart.classList.add("hidden");
     ovResult.classList.add("hidden");
     showToast("READY");
@@ -690,12 +597,10 @@
   function pauseToggle(){
     if (!state.running || state.ended) return;
     state.paused = !state.paused;
-
     if (state.paused){
-      // pause audio context (suspend)
       if (audioCtx) audioCtx.suspend();
       showToast("PAUSE");
-    } else {
+    }else{
       if (audioCtx) audioCtx.resume();
       showToast("RESUME");
       state.lastFrame = performance.now();
@@ -710,18 +615,13 @@
   }
 
   function stopGame(showResult=true){
-    state.running = false;
-    state.paused = false;
+    state.running=false; state.paused=false;
     stopBGM();
-
-    if (audioCtx && audioCtx.state === "running") {
-      // keep context alive; no hard stop needed
-    }
     if (showResult) openResult();
   }
 
   function openResult(){
-    state.ended = true;
+    state.ended=true;
     ovResult.classList.remove("hidden");
 
     rScore.textContent = String(state.score);
@@ -729,8 +629,8 @@
     rP.textContent = String(state.counts.perfect);
     rGOM.textContent = `${state.counts.great} / ${state.counts.good} / ${state.counts.miss}`;
 
-    const total = state.counts.perfect + state.counts.great + state.counts.good + state.counts.miss;
-    const acc = total ? Math.round((state.counts.perfect*1 + state.counts.great*0.7 + state.counts.good*0.4) / total * 1000)/10 : 0;
+    const total = state.counts.perfect+state.counts.great+state.counts.good+state.counts.miss;
+    const acc = total ? Math.round((state.counts.perfect*1 + state.counts.great*0.7 + state.counts.good*0.4)/total*1000)/10 : 0;
     resultSummary.textContent = `ACC: ${acc}%  |  総ノーツ: ${total}  |  難易度: ${elDiff.value.toUpperCase()}`;
   }
 
@@ -742,20 +642,24 @@
 
   // ---------- Timing ----------
   function getSongTimeSec(){
-    // Prefer audio time when available for better sync
-    if (audioCtx && bgmStarted){
-      return Math.max(0, audioCtx.currentTime - songStartAt);
-    }
-    return (performance.now() - state.t0Perf) / 1000;
+    if (audioCtx && bgmStarted) return Math.max(0, audioCtx.currentTime - songStartAt);
+    return 0;
   }
 
   // ---------- Judgement ----------
+  function gradeFromDt(dt){
+    for (const w of WINDOWS) if (dt <= w.dt) return w;
+    return null;
+  }
+
+  function laneX(lane){ return lane===0 ? laneXL : laneXR; }
+
   function judgeAt(t){
     if (!state.running || state.paused) return;
 
     const goodWin = WINDOWS[WINDOWS.length-1].dt;
 
-    // collect hittable notes in window
+    // group hittable notes
     const hitList = [];
     for (const n of state.notes){
       if (n.judged) continue;
@@ -764,37 +668,39 @@
     }
 
     if (hitList.length === 0){
-      // empty hit: small negative feedback (optional)
       playSE("MISS");
-      spawnRipple(laneX, judgeY, "miss");
-      state.camShake = Math.min(1, state.camShake + 0.12);
+      bigHitFX(laneCenterX, judgeY, "MISS");
+      state.camShake = Math.min(1, state.camShake + 0.22);
+      state.flash = Math.min(1, state.flash + 0.10);
       return;
     }
 
-    let bestGrade = null;
-
+    // judge all in window (stack hit)
+    let best = null;
     for (const h of hitList){
-      const { n, dt } = h;
-      let grade = null;
-      for (const w of WINDOWS){ if (dt <= w.dt){ grade = w; break; } }
-      if (!grade) continue;
+      const g = gradeFromDt(h.dt);
+      if (!g) continue;
 
+      const n = h.n;
       n.judged = true;
       n.hit = true;
 
-      state.score += grade.pts;
+      state.score += g.pts;
       state.combo += 1;
       state.maxCombo = Math.max(state.maxCombo, state.combo);
-      state.counts[grade.key] += 1;
+      state.counts[g.key] += 1;
 
-      if (!bestGrade || grade.pts > bestGrade.pts) bestGrade = grade;
+      if (!best || g.pts > best.pts) best = g;
+
+      // per-note small fx at lane position
+      bigHitFX(laneX(n.lane), judgeY, g.name);
     }
 
-    if (bestGrade){
-      playSE(bestGrade.name);
-      spawnRipple(laneX, judgeY, bestGrade.name.toLowerCase());
-      burstParticles(laneX, judgeY, bestGrade.name);
-      state.camShake = Math.min(1, state.camShake + (bestGrade.name==="PERFECT" ? 0.20 : 0.12));
+    if (best){
+      playSE(best.name);
+      // screen-level fx once
+      state.flash = Math.min(1, state.flash + (best.name==="PERFECT"?0.28:0.18));
+      state.camShake = Math.min(1, state.camShake + (best.name==="PERFECT"?0.40:0.28));
     }
   }
 
@@ -803,92 +709,121 @@
     for (const n of state.notes){
       if (n.judged) continue;
       if (t - n.t > missAfter){
-        n.judged = true;
-        n.hit = false;
+        n.judged = true; n.hit = false;
         state.counts.miss += 1;
         state.combo = 0;
-        // mild visual for miss
-        spawnRipple(laneX, judgeY, "miss");
       }
     }
   }
 
-  // ---------- Visual FX ----------
-  function spawnRipple(x,y,kind){
-    state.hitRipples.push({ x,y,r:18, life:1, kind });
+  // ---------- FX (派手化) ----------
+  function colorForGrade(grade){
+    if (grade==="PERFECT") return { core:"rgba(45,212,255,", glow:"rgba(45,212,255," };
+    if (grade==="GREAT")   return { core:"rgba(47,129,247,", glow:"rgba(47,129,247," };
+    if (grade==="GOOD")    return { core:"rgba(255,204,102,", glow:"rgba(255,204,102," };
+    return { core:"rgba(248,81,73,", glow:"rgba(248,81,73," }; // MISS
   }
 
-  function burstParticles(x,y,grade){
-    const n = (grade==="PERFECT") ? 22 : (grade==="GREAT") ? 16 : 10;
-    for (let i=0;i<n;i++){
+  function bigHitFX(x,y,grade){
+    // Multiple rings
+    const ringCount = (grade==="PERFECT") ? 3 : (grade==="GREAT") ? 2 : 2;
+    for (let i=0;i<ringCount;i++){
+      state.hitRings.push({
+        x, y,
+        r: 18 + i*10,
+        life: 1.0,
+        grade,
+        thick: 3 + i
+      });
+    }
+
+    // Sparks (particles)
+    const sp = (grade==="PERFECT") ? 34 : (grade==="GREAT") ? 26 : (grade==="GOOD") ? 18 : 20;
+    for (let i=0;i<sp;i++){
       const a = Math.random()*Math.PI*2;
-      const s = (grade==="PERFECT") ? (2.6 + Math.random()*3.2) : (2.2 + Math.random()*2.6);
-      state.particles.push({
-        x,y,
+      const s = (grade==="PERFECT") ? (3.8+Math.random()*4.8) : (3.0+Math.random()*4.0);
+      state.sparks.push({
+        x, y,
         vx: Math.cos(a)*s,
         vy: Math.sin(a)*s - 1.2,
-        life: 0.9 + Math.random()*0.5,
-        size: 2 + Math.random()*2.4,
+        life: 0.9 + Math.random()*0.7,
+        grade
+      });
+    }
+
+    // Streaks (lines)
+    const ln = (grade==="PERFECT") ? 10 : 6;
+    for (let i=0;i<ln;i++){
+      const a = Math.random()*Math.PI*2;
+      const len = (grade==="PERFECT") ? (60+Math.random()*80) : (40+Math.random()*60);
+      state.streaks.push({
+        x0: x, y0: y,
+        x1: x + Math.cos(a)*len,
+        y1: y + Math.sin(a)*len,
+        life: 0.6 + Math.random()*0.35,
         grade
       });
     }
   }
 
-  function lerp(a,b,t){ return a + (b-a)*t; }
-
   // ---------- Render ----------
-  function draw(t, dt){
-    const p = state.params;
+  function roundRect(ctx,x,y,w,h,r){
+    const rr = Math.min(r,w/2,h/2);
+    ctx.beginPath();
+    ctx.moveTo(x+rr,y);
+    ctx.arcTo(x+w,y, x+w,y+h, rr);
+    ctx.arcTo(x+w,y+h, x,y+h, rr);
+    ctx.arcTo(x,y+h, x,y, rr);
+    ctx.arcTo(x,y, x+w,y, rr);
+    ctx.closePath();
+  }
 
-    // camera shake
-    const shake = state.camShake;
-    state.camShake = Math.max(0, state.camShake - dt*1.8);
+  function noteY(noteTime,t,speed){
+    const dt = noteTime - t;
+    return judgeY - dt*speed;
+  }
 
-    const sx = (Math.random()*2-1) * 6 * shake;
-    const sy = (Math.random()*2-1) * 6 * shake;
-
-    ctx.setTransform(1,0,0,1,0,0);
-    ctx.clearRect(0,0,W,H);
-
-    ctx.save();
-    ctx.translate(sx, sy);
-
-    // background particles
-    ctx.globalAlpha = 0.9;
-    // soft vignette
-    const vg = ctx.createRadialGradient(W*0.5,H*0.2, 120, W*0.5,H*0.7, 520);
-    vg.addColorStop(0, "rgba(47,129,247,0.10)");
-    vg.addColorStop(1, "rgba(0,0,0,0.35)");
-    ctx.fillStyle = vg;
-    ctx.fillRect(0,0,W,H);
-
-    // lane glow
-    const laneW = 280;
+  function drawLane(){
+    // lane area
+    const laneW = 320;
     const laneX0 = (W-laneW)/2;
+
     const laneGrad = ctx.createLinearGradient(0,0,0,H);
-    laneGrad.addColorStop(0, "rgba(255,255,255,0.06)");
-    laneGrad.addColorStop(1, "rgba(0,0,0,0.18)");
+    laneGrad.addColorStop(0,"rgba(255,255,255,0.06)");
+    laneGrad.addColorStop(1,"rgba(0,0,0,0.20)");
     ctx.fillStyle = laneGrad;
     roundRect(ctx, laneX0, 70, laneW, H-140, 22);
     ctx.fill();
 
-    // grid lines
-    ctx.globalAlpha = 0.25;
-    ctx.strokeStyle = "rgba(157,189,240,0.22)";
-    for (let y=100; y<H; y+=64){
-      ctx.beginPath();
-      ctx.moveTo(laneX0+18, y);
-      ctx.lineTo(laneX0+laneW-18, y);
-      ctx.stroke();
-    }
-    ctx.globalAlpha = 1;
+    // left/right divider glow lines
+    ctx.save();
+    ctx.lineWidth = 2;
+    ctx.shadowBlur = 16;
 
-    // judge line and windows
+    // left lane line
+    ctx.strokeStyle = "rgba(45,212,255,0.35)";
+    ctx.shadowColor = "rgba(45,212,255,0.35)";
+    ctx.beginPath();
+    ctx.moveTo(laneXL, 90);
+    ctx.lineTo(laneXL, H-90);
+    ctx.stroke();
+
+    // right lane line
+    ctx.strokeStyle = "rgba(47,129,247,0.35)";
+    ctx.shadowColor = "rgba(47,129,247,0.35)";
+    ctx.beginPath();
+    ctx.moveTo(laneXR, 90);
+    ctx.lineTo(laneXR, H-90);
+    ctx.stroke();
+
+    ctx.restore();
+
+    // judge line + windows
+    const p = state.params;
     const pxGood = WINDOWS[2].dt * p.noteSpeed;
     const pxGreat = WINDOWS[1].dt * p.noteSpeed;
     const pxPerfect = WINDOWS[0].dt * p.noteSpeed;
 
-    // window highlights
     ctx.save();
     ctx.globalAlpha = 0.10;
     ctx.fillStyle = "rgba(47,129,247,1)";
@@ -899,7 +834,6 @@
     ctx.fillRect(laneX0+18, judgeY - pxPerfect, laneW-36, pxPerfect*2);
     ctx.restore();
 
-    // judge line
     ctx.save();
     ctx.lineWidth = 3;
     ctx.strokeStyle = "rgba(45,212,255,0.85)";
@@ -910,143 +844,36 @@
     ctx.lineTo(laneX0+laneW-18, judgeY);
     ctx.stroke();
     ctx.restore();
-
-    // notes (stack overlaps)
-    const visibleTop = -120, visibleBottom = H + 120;
-    const stacks = [];
-    const tol = 0.012;
-
-    for (const n of state.notes){
-      const y = noteY(n.t, t, p.noteSpeed);
-      if (y < visibleTop || y > visibleBottom) continue;
-      if (n.judged && y > judgeY + 22) continue;
-
-      let found = false;
-      for (const s of stacks){
-        if (Math.abs(s.t - n.t) < tol){ s.items.push({n,y}); found = true; break; }
-      }
-      if (!found) stacks.push({ t:n.t, items:[{n,y}] });
-    }
-
-    for (const s of stacks){
-      const items = s.items;
-      items.sort((a,b)=>a.y-b.y);
-      for (let i=0;i<items.length;i++){
-        const { n, y } = items[i];
-        const offset = (i - (items.length-1)/2) * 16;
-        drawNote(laneX + offset, y, n);
-      }
-    }
-
-    // ripples
-    for (let i=state.hitRipples.length-1; i>=0; i--){
-      const r = state.hitRipples[i];
-      r.life -= dt*2.2;
-      r.r += dt*260;
-      if (r.life <= 0){ state.hitRipples.splice(i,1); continue; }
-
-      const alpha = Math.max(0, r.life);
-      let col = "rgba(45,212,255,";
-      if (r.kind==="perfect") col = "rgba(45,212,255,";
-      if (r.kind==="great") col = "rgba(47,129,247,";
-      if (r.kind==="good") col = "rgba(255,204,102,";
-      if (r.kind==="miss") col = "rgba(248,81,73,";
-
-      ctx.save();
-      ctx.globalAlpha = 1;
-      ctx.lineWidth = 3;
-      ctx.strokeStyle = col + (0.35*alpha) + ")";
-      ctx.shadowColor = col + (0.55*alpha) + ")";
-      ctx.shadowBlur = 18;
-      ctx.beginPath();
-      ctx.arc(r.x, r.y, r.r, 0, Math.PI*2);
-      ctx.stroke();
-      ctx.restore();
-    }
-
-    // particles
-    for (let i=state.particles.length-1; i>=0; i--){
-      const ptl = state.particles[i];
-      ptl.life -= dt*1.5;
-      if (ptl.life <= 0){ state.particles.splice(i,1); continue; }
-      ptl.vy += 10*dt;
-      ptl.x += ptl.vx * 60*dt;
-      ptl.y += ptl.vy * 60*dt;
-
-      const a = Math.max(0, Math.min(1, ptl.life));
-      let c = "rgba(45,212,255,";
-      if (ptl.grade==="GREAT") c = "rgba(47,129,247,";
-      if (ptl.grade==="GOOD") c = "rgba(255,204,102,";
-      ctx.fillStyle = c + (0.75*a) + ")";
-      ctx.fillRect(ptl.x, ptl.y, ptl.size, ptl.size);
-    }
-
-    // HUD
-    drawHUD(t);
-
-    ctx.restore();
-  }
-
-  function roundRect(ctx, x, y, w, h, r){
-    const rr = Math.min(r, w/2, h/2);
-    ctx.beginPath();
-    ctx.moveTo(x+rr,y);
-    ctx.arcTo(x+w,y, x+w,y+h, rr);
-    ctx.arcTo(x+w,y+h, x,y+h, rr);
-    ctx.arcTo(x,y+h, x,y, rr);
-    ctx.arcTo(x,y, x+w,y, rr);
-    ctx.closePath();
-  }
-
-  function noteY(noteTime, t, speed){
-    const dt = noteTime - t;
-    return judgeY - dt * speed;
   }
 
   function drawNote(x,y,note){
     const r = 16;
-    const base = note.judged ? (note.hit ? "good" : "miss") : "live";
-
     ctx.save();
-    let fill = "rgba(231,237,247,0.88)";
-    let ring = "rgba(45,212,255,0.70)";
-    let glow = "rgba(45,212,255,0.55)";
 
-    if (base==="good"){
-      fill = "rgba(46,160,67,0.86)";
-      ring = "rgba(46,160,67,0.95)";
-      glow = "rgba(46,160,67,0.55)";
-    } else if (base==="miss"){
-      fill = "rgba(248,81,73,0.52)";
-      ring = "rgba(248,81,73,0.60)";
-      glow = "rgba(248,81,73,0.45)";
-    }
+    let fill = note.judged ? (note.hit ? "rgba(46,160,67,0.86)" : "rgba(248,81,73,0.52)") : "rgba(231,237,247,0.90)";
+    let ring = note.judged ? "rgba(255,255,255,0.0)" : (note.lane===0 ? "rgba(45,212,255,0.85)" : "rgba(47,129,247,0.85)");
+    let glow = note.judged ? (note.hit ? "rgba(46,160,67,0.55)" : "rgba(248,81,73,0.40)") : (note.lane===0 ? "rgba(45,212,255,0.55)" : "rgba(47,129,247,0.55)");
 
-    // body
     ctx.beginPath();
     ctx.fillStyle = fill;
     ctx.shadowColor = glow;
-    ctx.shadowBlur = note.judged ? 8 : 16;
-    ctx.arc(x, y, r, 0, Math.PI*2);
+    ctx.shadowBlur = note.judged ? 8 : 18;
+    ctx.arc(x,y,r,0,Math.PI*2);
     ctx.fill();
 
-    // ring
     if (!note.judged){
       ctx.beginPath();
       ctx.strokeStyle = ring;
       ctx.lineWidth = 2;
-      ctx.shadowBlur = 18;
-      ctx.arc(x, y, r-5, 0, Math.PI*2);
+      ctx.shadowBlur = 22;
+      ctx.arc(x,y,r-5,0,Math.PI*2);
       ctx.stroke();
-    }
 
-    // pulse highlight
-    if (!note.judged){
       const pulse = 0.5 + 0.5*Math.sin(performance.now()/120);
       ctx.beginPath();
-      ctx.globalAlpha = 0.10 + 0.12*pulse;
+      ctx.globalAlpha = 0.10 + 0.14*pulse;
       ctx.fillStyle = "rgba(255,255,255,1)";
-      ctx.arc(x, y, r+6, 0, Math.PI*2);
+      ctx.arc(x,y,r+7,0,Math.PI*2);
       ctx.fill();
     }
 
@@ -1054,38 +881,176 @@
   }
 
   function drawHUD(t){
-    const p = state.params;
-
-    // Score/combo
     ctx.save();
     ctx.fillStyle = "rgba(231,237,247,0.92)";
-    ctx.font = "800 22px system-ui, -apple-system, Segoe UI, Roboto, sans-serif";
+    ctx.font = "900 22px system-ui, -apple-system, Segoe UI, Roboto, sans-serif";
     ctx.fillText(`SCORE  ${state.score}`, 18, 34);
 
     ctx.fillStyle = "rgba(231,237,247,0.72)";
-    ctx.font = "700 15px system-ui, -apple-system, Segoe UI, Roboto, sans-serif";
+    ctx.font = "800 15px system-ui, -apple-system, Segoe UI, Roboto, sans-serif";
     ctx.fillText(`COMBO  ${state.combo}   (MAX ${state.maxCombo})`, 18, 56);
 
-    // judgement text
-    // (lightweight: show last based on peak/threshold)
-    // also show input meters
+    // debug line
     const th = state.params.inputThreshold;
     ctx.fillStyle = "rgba(231,237,247,0.60)";
-    ctx.font = "650 13px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace";
+    ctx.font = "700 13px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace";
     ctx.fillText(`TH:${th.toFixed(1)}  PEAK:${peak.toFixed(2)}  SENS:${parseFloat(elSens.value).toFixed(2)}`, 18, H-20);
 
     // progress
     const last = state.notes[state.notes.length-1];
     const endT = last ? last.t : 0;
-    const prog = endT ? Math.max(0, Math.min(1, t / (endT + 0.6))) : 0;
-    const barW = 180, barH = 8;
-    const bx = W - barW - 18, by = 22;
+    const prog = endT ? Math.max(0, Math.min(1, t/(endT+0.6))) : 0;
+    const barW=180, barH=8;
+    const bx=W-barW-18, by=22;
     ctx.fillStyle = "rgba(255,255,255,0.10)";
-    ctx.fillRect(bx, by, barW, barH);
+    ctx.fillRect(bx,by,barW,barH);
     ctx.fillStyle = "rgba(45,212,255,0.85)";
-    ctx.fillRect(bx, by, barW*prog, barH);
+    ctx.fillRect(bx,by,barW*prog,barH);
+    ctx.restore();
+  }
+
+  function drawFX(dt){
+    // flash overlay
+    if (state.flash > 0){
+      state.flash = Math.max(0, state.flash - dt*2.2);
+      ctx.save();
+      ctx.globalAlpha = 0.22 * state.flash;
+      const g = ctx.createRadialGradient(W*0.5, judgeY, 80, W*0.5, judgeY, 520);
+      g.addColorStop(0,"rgba(45,212,255,1)");
+      g.addColorStop(1,"rgba(0,0,0,0)");
+      ctx.fillStyle = g;
+      ctx.fillRect(0,0,W,H);
+      ctx.restore();
+    }
+
+    // rings
+    for (let i=state.hitRings.length-1; i>=0; i--){
+      const r = state.hitRings[i];
+      r.life -= dt*2.0;
+      r.r += dt*340;
+      if (r.life<=0){ state.hitRings.splice(i,1); continue; }
+
+      const alpha = Math.max(0, r.life);
+      const col = colorForGrade(r.grade);
+
+      ctx.save();
+      ctx.lineWidth = r.thick;
+      ctx.strokeStyle = col.core + (0.35*alpha) + ")";
+      ctx.shadowColor = col.glow + (0.70*alpha) + ")";
+      ctx.shadowBlur = 26;
+      ctx.beginPath();
+      ctx.arc(r.x, r.y, r.r, 0, Math.PI*2);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // streaks
+    for (let i=state.streaks.length-1; i>=0; i--){
+      const s = state.streaks[i];
+      s.life -= dt*2.6;
+      if (s.life<=0){ state.streaks.splice(i,1); continue; }
+      const a = Math.max(0, s.life);
+      const col = colorForGrade(s.grade);
+
+      ctx.save();
+      ctx.globalAlpha = 0.65*a;
+      ctx.lineWidth = 2.5;
+      ctx.strokeStyle = col.core + (0.65*a) + ")";
+      ctx.shadowColor = col.glow + (0.80*a) + ")";
+      ctx.shadowBlur = 18;
+      ctx.beginPath();
+      ctx.moveTo(s.x0, s.y0);
+      ctx.lineTo(s.x1, s.y1);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // sparks
+    for (let i=state.sparks.length-1; i>=0; i--){
+      const p = state.sparks[i];
+      p.life -= dt*1.55;
+      if (p.life<=0){ state.sparks.splice(i,1); continue; }
+      p.vy += 11*dt;
+      p.x += p.vx * 60*dt;
+      p.y += p.vy * 60*dt;
+
+      const a = Math.max(0, Math.min(1, p.life));
+      const col = colorForGrade(p.grade);
+
+      ctx.save();
+      ctx.globalAlpha = 0.85*a;
+      ctx.fillStyle = col.core + (0.85*a) + ")";
+      ctx.shadowColor = col.glow + (0.85*a) + ")";
+      ctx.shadowBlur = 16;
+      ctx.fillRect(p.x, p.y, 3.2, 3.2);
+      ctx.restore();
+    }
+  }
+
+  function drawScene(t, dt){
+    // camera shake
+    state.camShake = Math.max(0, state.camShake - dt*1.8);
+    const shake = state.camShake;
+    const sx = (Math.random()*2-1) * 8 * shake;
+    const sy = (Math.random()*2-1) * 8 * shake;
+
+    ctx.setTransform(1,0,0,1,0,0);
+    ctx.clearRect(0,0,W,H);
+
+    ctx.save();
+    ctx.translate(sx, sy);
+
+    // vignette
+    const vg = ctx.createRadialGradient(W*0.5,H*0.2,120, W*0.5,H*0.7,560);
+    vg.addColorStop(0,"rgba(47,129,247,0.10)");
+    vg.addColorStop(1,"rgba(0,0,0,0.36)");
+    ctx.fillStyle = vg;
+    ctx.fillRect(0,0,W,H);
+
+    drawLane();
+
+    // notes
+    const p = state.params;
+    const visibleTop=-140, visibleBottom=H+140;
+    for (const n of state.notes){
+      const y = noteY(n.t, t, p.noteSpeed);
+      if (y<visibleTop || y>visibleBottom) continue;
+      if (n.judged && y>judgeY+22) continue;
+      drawNote(laneX(n.lane), y, n);
+    }
+
+    // FX over notes
+    drawFX(dt);
+
+    // big judgement text (派手)
+    // Perfect/Great/Good/Missの最後を少しだけ表示
+    if (state._judgeText && performance.now() < state._judgeUntil){
+      const g = state._judgeGrade || "PERFECT";
+      const col = colorForGrade(g);
+      const life = (state._judgeUntil - performance.now()) / 520;
+      const alpha = Math.max(0, Math.min(1, life));
+
+      ctx.save();
+      ctx.globalAlpha = 1;
+      ctx.font = "1000 52px system-ui, -apple-system, Segoe UI, Roboto, sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.shadowColor = col.glow + (0.95*alpha) + ")";
+      ctx.shadowBlur = 36;
+      ctx.fillStyle = col.core + (0.95*alpha) + ")";
+      ctx.fillText(state._judgeText, W*0.5, judgeY-110);
+      ctx.restore();
+    }
+
+    drawHUD(t);
 
     ctx.restore();
+  }
+
+  function showJudgeText(text, grade){
+    state._judgeText = text;
+    state._judgeGrade = grade;
+    state._judgeUntil = performance.now() + 520;
   }
 
   // ---------- Loop ----------
@@ -1093,41 +1058,73 @@
     if (!state.running || state.paused) return;
 
     const now = performance.now();
-    const dt = Math.min(0.05, (now - state.lastFrame) / 1000);
+    const dt = Math.min(0.05, (now - state.lastFrame)/1000);
     state.lastFrame = now;
 
     const t = getSongTimeSec();
     processMisses(t);
-    draw(t, dt);
+    drawScene(t, dt);
 
-    // end check
     const last = state.notes[state.notes.length-1];
     if (last && (t - last.t) > 1.1){
       stopGame(true);
       return;
     }
-
     requestAnimationFrame(loop);
   }
 
-  // ---------- Start / Pause / Restart ----------
-  btnPause.addEventListener("click", pauseToggle);
-  btnRestart.addEventListener("click", restart);
+  // show judge text when SE plays (hooked in judgeAt)
+  // modify judgeAt to call showJudgeText:
+  const _judgeAt = judgeAt;
+  judgeAt = function(t){
+    if (!state.running || state.paused) return;
 
-  // ---------- Motion permission shortcut ----------
-  btnPerm.addEventListener("click", requestMotionPermission);
+    const goodWin = WINDOWS[WINDOWS.length-1].dt;
+    const hitList = [];
+    for (const n of state.notes){
+      if (n.judged) continue;
+      const dt = Math.abs(t - n.t);
+      if (dt <= goodWin) hitList.push({ n, dt });
+    }
 
-  // Keep volumes live
-  elSeVol.addEventListener("input", setVolumes);
-  elBgmVol.addEventListener("input", setVolumes);
+    if (hitList.length === 0){
+      playSE("MISS");
+      showJudgeText("MISS", "MISS");
+      bigHitFX(laneCenterX, judgeY, "MISS");
+      state.camShake = Math.min(1, state.camShake + 0.22);
+      state.flash = Math.min(1, state.flash + 0.10);
+      return;
+    }
 
-  // initial texts
+    let best = null;
+    for (const h of hitList){
+      const g = gradeFromDt(h.dt);
+      if (!g) continue;
+
+      const n = h.n;
+      n.judged=true; n.hit=true;
+      state.score += g.pts;
+      state.combo += 1;
+      state.maxCombo = Math.max(state.maxCombo, state.combo);
+      state.counts[g.key] += 1;
+
+      if (!best || g.pts > best.pts) best = g;
+
+      bigHitFX(laneX(n.lane), judgeY, g.name);
+    }
+
+    if (best){
+      playSE(best.name);
+      showJudgeText(best.name, best.name);
+      state.flash = Math.min(1, state.flash + (best.name==="PERFECT"?0.28:0.18));
+      state.camShake = Math.min(1, state.camShake + (best.name==="PERFECT"?0.40:0.28));
+    }
+  }
+
+  // ---------- Init ----------
   elSensText.textContent = fmt2(parseFloat(elSens.value));
   elSeText.textContent = fmt2(parseFloat(elSeVol.value));
   elBgmText.textContent = fmt2(parseFloat(elBgmVol.value));
-
-  // expose minimal debug
-  window.__ShakeRhythm = { startGame, pauseToggle, requestMotionPermission };
 
 })();
 </script>
